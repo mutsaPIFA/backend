@@ -22,7 +22,8 @@ public class MockOutfitComposer implements OutfitComposer {
 
     List<List<AiClosetItem>> bases = buildBases(ownItems);
     if (bases.isEmpty()) {
-      // OWN 옷이 아직 없는 옷장 — MCM 단독 제안 1개 (프론트는 MCM만 렌더)
+      // TODO(추후 수정): OWN 옷 0벌일 때 MCM 단독 후보 1개 반환은 임시 동작.
+      // 빈 옷장 UX(옷 등록 유도 등)가 정해지면 재설계.
       AiProduct mcm = mcmCandidates.get(0);
       return List.of(new OutfitPick(List.of(), mcm.id(), moodLabel + "의 시작점이 되는 " + mcm.name()));
     }
