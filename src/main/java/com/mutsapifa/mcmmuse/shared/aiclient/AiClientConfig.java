@@ -56,4 +56,16 @@ public class AiClientConfig {
     // http 구현은 ai 서비스 /style-dna·/recommend 확정 후 — 그 전까지 룰베이스 mock (폴백으로도 유지)
     return new MockRecommender();
   }
+
+  @Bean
+  public OutfitComposer outfitComposer(AiProperties properties) {
+    // http 구현은 ai 서비스 /outfits 확정 후
+    return new MockOutfitComposer();
+  }
+
+  @Bean
+  public LookImageGenerator lookImageGenerator(AiProperties properties) {
+    // mock = 생성 안 함(null) — 계약상 generatedImageUrl null 허용. Gemini http 전환 시 실물로 교체
+    return (itemCutoutUrls, mcmImageUrl) -> null;
+  }
 }
