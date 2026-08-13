@@ -50,4 +50,10 @@ public class AiClientConfig {
         ? new HttpAiClients.HttpImageStandardizer(aiWebClient)
         : new MockAiClients.MockImageStandardizer();
   }
+
+  @Bean
+  public Recommender recommender(AiProperties properties) {
+    // http 구현은 ai 서비스 /style-dna·/recommend 확정 후 — 그 전까지 룰베이스 mock (폴백으로도 유지)
+    return new MockRecommender();
+  }
 }

@@ -65,3 +65,4 @@ app:
     cutout: mock
     tagging: mock
     standardize: mock
+    recommend: mock        # DNA·MCM추천 — mock=룰베이스(데모 가능 수준)

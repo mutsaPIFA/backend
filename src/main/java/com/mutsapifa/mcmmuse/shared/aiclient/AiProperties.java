@@ -10,7 +10,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "app.ai")
 public record AiProperties(
-    String baseUrl, Duration timeout, String cutout, String tagging, String standardize) {
+    String baseUrl,
+    Duration timeout,
+    String cutout,
+    String tagging,
+    String standardize,
+    String recommend) {
 
   public boolean cutoutHttp() {
     return "http".equals(cutout);
@@ -22,5 +27,9 @@ public record AiProperties(
 
   public boolean standardizeHttp() {
     return "http".equals(standardize);
+  }
+
+  public boolean recommendHttp() {
+    return "http".equals(recommend);
   }
 }
