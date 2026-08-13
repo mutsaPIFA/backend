@@ -23,6 +23,7 @@
 - **금액: `INTEGER`** — KRW 원 단위, 소수 없음
 - **URL: `TEXT`** — 길이 제한 없음
 - controlled vocabulary(category/color/material/mood): **`VARCHAR` + Java `@Enumerated(EnumType.STRING)`** — DB enum·코드 테이블 안 씀. 값 추가는 enum 상수 + 계약 문서 갱신으로 끝. 유효값의 단일 소스는 계약(`docs/api-v1.md` 공통 타입)
+  - enum은 `shared/vocab`에 있고 **상수명 = 계약의 한국어 값 그대로**(`상의`, `네이비`, `가죽`…). STRING 저장값·JSON 응답값·계약값이 자동으로 일치하는 구조다. **영어명으로 리네이밍 금지** — 하는 순간 DB 저장값·API 응답이 전부 깨진다. 값 추가도 계약 문서와 같은 한국어로.
 
 ## 공통 컬럼
 
