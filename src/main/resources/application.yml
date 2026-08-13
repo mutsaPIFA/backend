@@ -56,8 +56,12 @@ app:
     local-path: ./uploads
     public-base-url: http://localhost:8080/images
 
-  # AI 서비스 연동 — 키/서비스 없이도 개발 진행 가능하게 mock 기본
+  # AI 서비스 연동 — 포트별 스위치(mock | http). 준비된 것부터 실물 전환.
+  # cutout: ai 서비스(rembg)만 띄우면 http 가능 (키 불필요)
+  # tagging / standardize: Gemini billing 키 확보 후 http
   ai:
-    mode: mock             # mock | http
     base-url: http://localhost:8000
-    timeout: 60s
+    timeout: 90s           # Gemini 무료 티어 첫 콜 스로틀 ~79s 실측 — 여유 있게
+    cutout: mock
+    tagging: mock
+    standardize: mock
