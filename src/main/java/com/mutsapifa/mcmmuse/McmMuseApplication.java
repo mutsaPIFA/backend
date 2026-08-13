@@ -2,6 +2,7 @@ package com.mutsapifa.mcmmuse;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
@@ -11,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * 백그라운드에서 돌아 {@code generatedImageUrl} 을 나중에 채운다.
  */
 @EnableAsync
+@ConfigurationPropertiesScan
 @SpringBootApplication
 public class McmMuseApplication {
 

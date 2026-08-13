@@ -42,6 +42,7 @@ app:
     secret: ${JWT_SECRET:change-me-in-env-this-must-be-at-least-32-bytes-long}
     access-token-ttl: 30m
     refresh-token-ttl: 14d
+    cookie-secure: false   # HTTPS 배포 시 true (8/18 가비아 배포 때)
 
   # CORS — refresh 쿠키를 쓰므로 allowCredentials=true 이고, 와일드카드 오리진 불가
   cors:
