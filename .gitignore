@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse / VS Code
+.classpath
+.project
+.settings/
+.vscode/
+
+# 환경변수 / 시크릿
+.env
+.env.local
+
+# 로컬 업로드 이미지 (StorageService type=local)
+uploads/
+
+# 로그
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

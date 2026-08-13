@@ -1,0 +1,60 @@
+# MCM MUSE 통합 오케스트레이션 (루트 compose — backend 레포가 소유)
+#
+#   docker compose up -d postgres     # DB만 띄우고 백엔드는 IntelliJ에서 실행 (개발 중 권장)
+#   docker compose up --build         # 전체 통합 실행
+#
+# ai 서비스는 ../ai 레포를 클론해 둔 상태에서만 빌드된다.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mcmmuse-postgres
+    environment:
+      POSTGRES_DB: mcmmuse
+      POSTGRES_USER: ${DB_USERNAME:-mcmmuse}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mcmmuse}
+    ports:
+      # 호스트 5432는 로컬 PostgreSQL 설치가 점유하는 경우가 많아 5433으로 노출한다.
+      # (컨테이너 내부 통신은 여전히 postgres:5432)
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-mcmmuse} -d mcmmuse"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: mcmmuse-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mcmmuse
+      DB_USERNAME: ${DB_USERNAME:-mcmmuse}
+      DB_PASSWORD: ${DB_PASSWORD:-mcmmuse}
+      JWT_SECRET: ${JWT_SECRET}
+      APP_AI_MODE: ${APP_AI_MODE:-mock}
+      APP_AI_BASE_URL: http://ai:8000
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-uploads:/app/uploads
+
+  ai:
+    build: ../ai
+    container_name: mcmmuse-ai
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "8000:8000"
+    profiles:
+      # ai 레포가 준비되기 전엔 뜨지 않도록: docker compose --profile ai up
+      - ai
+
+volumes:
+  postgres-data:
+  backend-uploads:

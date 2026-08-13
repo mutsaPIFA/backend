@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: mcm-muse
+  profiles:
+    active: local
+
+  jpa:
+    hibernate:
+      # 스키마는 Flyway가 소유한다. ERD 확정 후 db/migration/V1__init.sql 작성.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      # POST /scan 업로드 (스마트폰 원본 사진 여유분)
+      max-file-size: 15MB
+      max-request-size: 15MB
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+# ---------------------------------------------------------------------------
+# 애플리케이션 설정
+# ---------------------------------------------------------------------------
+app:
+  # 인증 — access token(body) + refresh token(HttpOnly 쿠키)
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-env-this-must-be-at-least-32-bytes-long}
+    access-token-ttl: 30m
+    refresh-token-ttl: 14d
+
+  # CORS — refresh 쿠키를 쓰므로 allowCredentials=true 이고, 와일드카드 오리진 불가
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://localhost:3000
+
+  # 이미지 저장 — StorageService 추상화 (계약 Q8)
+  storage:
+    type: local            # local | s3
+    local-path: ./uploads
+    public-base-url: http://localhost:8080/images
+
+  # AI 서비스 연동 — 키/서비스 없이도 개발 진행 가능하게 mock 기본
+  ai:
+    mode: mock             # mock | http
+    base-url: http://localhost:8000
+    timeout: 60s
