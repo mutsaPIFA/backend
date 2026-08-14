@@ -9,13 +9,14 @@ import java.util.List;
 public record OutfitResult(
     Long moodId,
     String occasionLabel,
+    String concept,
     String imageUrl,
     List<ItemSummary> closetItems,
     McmSummary mcmProduct,
     String reason) {
 
   public OutfitResult withImageUrl(String url) {
-    return new OutfitResult(moodId, occasionLabel, url, closetItems, mcmProduct, reason);
+    return new OutfitResult(moodId, occasionLabel, concept, url, closetItems, mcmProduct, reason);
   }
 
   public record ItemSummary(Long id, String cutoutUrl, Category category) {}

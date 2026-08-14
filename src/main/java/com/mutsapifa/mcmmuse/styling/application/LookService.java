@@ -50,6 +50,7 @@ public class LookService {
       List<Long> closetItemIds,
       Long mcmProductId,
       String imageUrl,
+      String concept,
       String reason,
       LocalDate wornDate) {
     Mood mood = moodRepository.findById(moodId).orElseThrow(MoodNotFoundException::new);
@@ -74,6 +75,7 @@ public class LookService {
             wornDate != null ? wornDate : LocalDate.now(),
             moodId,
             mcmProductId,
+            concept,
             reason,
             closetItemIds);
     if (imageUrl != null && !imageUrl.isBlank()) {

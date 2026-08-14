@@ -81,7 +81,8 @@ public class CurationController {
                               name = "룩 저장",
                               value =
                                   "{\"moodId\":1,\"closetItemIds\":[1,2],\"mcmProductId\":12,"
-                                      + "\"imageUrl\":\"<후보 응답의 imageUrl>\"}")))
+                                      + "\"imageUrl\":\"<후보 응답의 imageUrl>\","
+                                      + "\"concept\":\"<후보 응답의 concept>\"}")))
           @Valid
           @RequestBody
           LookSaveRequest request) {
@@ -92,6 +93,7 @@ public class CurationController {
             request.closetItemIds(),
             request.mcmProductId(),
             request.imageUrl(),
+            request.concept(),
             request.reason(),
             request.wornDate());
     return ResponseEntity.status(HttpStatus.CREATED).body(result);

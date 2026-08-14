@@ -16,6 +16,7 @@ public record AiProperties(
     String tagging,
     String standardize,
     String outfitImage,
+    String outfitCompose,
     String recommend) {
 
   public boolean cutoutHttp() {
@@ -32,6 +33,10 @@ public record AiProperties(
 
   public boolean outfitImageHttp() {
     return "http".equals(outfitImage);
+  }
+
+  public boolean outfitComposeHttp() {
+    return "http".equals(outfitCompose);
   }
 
   public boolean recommendHttp() {

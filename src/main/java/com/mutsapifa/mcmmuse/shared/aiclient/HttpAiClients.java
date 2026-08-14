@@ -5,6 +5,7 @@ import com.mutsapifa.mcmmuse.shared.vocab.Color;
 import com.mutsapifa.mcmmuse.shared.vocab.ItemMood;
 import com.mutsapifa.mcmmuse.shared.vocab.Material;
 import java.util.List;
+import java.util.Map;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -72,6 +73,92 @@ public final class HttpAiClients {
           .retrieve()
           .bodyToMono(byte[].class)
           .block();
+    }
+  }
+
+  /** POST /style-dna·/recommend → 텍스트 LLM. 응답 id·enum은 신뢰하지 않는다 — enum은 엄격 파싱, id는 호출부가 DB 재검증. */
+  public static class HttpRecommender implements Recommender {
+
+    private record DnaResponse(
+        String summary,
+        List<String> dominantColors,
+        List<String> dominantMoods,
+        List<String> keywords) {}
+
+    private record PickResponse(Long productId, String reason, List<Long> pairsWithItemIds) {}
+
+    private record RecommendResponse(List<PickResponse> picks) {}
+
+    private final WebClient client;
+
+    public HttpRecommender(WebClient client) {
+      this.client = client;
+    }
+
+    @Override
+    public StyleDnaResult styleDna(List<AiClosetItem> items) {
+      DnaResponse res =
+          client
+              .post()
+              .uri("/style-dna")
+              .contentType(MediaType.APPLICATION_JSON)
+              .bodyValue(Map.of("items", items))
+              .retrieve()
+              .bodyToMono(DnaResponse.class)
+              .block();
+      return new StyleDnaResult(
+          res.summary(),
+          res.dominantColors().stream().map(Color::valueOf).toList(),
+          res.dominantMoods().stream().map(ItemMood::valueOf).toList(),
+          res.keywords());
+    }
+
+    @Override
+    public List<RecommendationPick> recommend(List<AiClosetItem> items, List<AiProduct> candidates) {
+      RecommendResponse res =
+          client
+              .post()
+              .uri("/recommend")
+              .contentType(MediaType.APPLICATION_JSON)
+              .bodyValue(Map.of("items", items, "products", candidates))
+              .retrieve()
+              .bodyToMono(RecommendResponse.class)
+              .block();
+      return res.picks().stream()
+          .map(p -> new RecommendationPick(p.productId(), p.reason(), p.pairsWithItemIds()))
+          .toList();
+    }
+  }
+
+  /** POST /outfits → 코디 조합 (상황 Context는 ai 서비스가 무드 라벨로 매핑) */
+  public static class HttpOutfitComposer implements OutfitComposer {
+
+    private record LookResponse(
+        String concept, List<Long> closetItemIds, Long mcmProductId, String reason) {}
+
+    private record OutfitsResponse(List<LookResponse> looks) {}
+
+    private final WebClient client;
+
+    public HttpOutfitComposer(WebClient client) {
+      this.client = client;
+    }
+
+    @Override
+    public List<OutfitPick> compose(
+        String moodLabel, List<AiClosetItem> ownItems, List<AiProduct> mcmCandidates) {
+      OutfitsResponse res =
+          client
+              .post()
+              .uri("/outfits")
+              .contentType(MediaType.APPLICATION_JSON)
+              .bodyValue(Map.of("mood", moodLabel, "items", ownItems, "products", mcmCandidates))
+              .retrieve()
+              .bodyToMono(OutfitsResponse.class)
+              .block();
+      return res.looks().stream()
+          .map(l -> new OutfitPick(l.closetItemIds(), l.mcmProductId(), l.concept(), l.reason()))
+          .toList();
     }
   }
 

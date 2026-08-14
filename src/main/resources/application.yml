@@ -75,4 +75,5 @@ app:
     tagging: http
     standardize: http
     outfit-image: http     # 코디 후보 화보 — mock이면 imageUrl=null(프론트 콜라주 폴백)
-    recommend: mock        # DNA·MCM추천 — mock=룰베이스(데모 가능 수준)
+    outfit-compose: http   # 코디 조합 LLM — 실패 시 런타임에 룰베이스 폴백(AiClientConfig)
+    recommend: http        # DNA·MCM추천 LLM — 실패 시 런타임에 룰베이스 폴백

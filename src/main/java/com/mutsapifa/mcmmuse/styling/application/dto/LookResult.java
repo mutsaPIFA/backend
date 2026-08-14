@@ -11,6 +11,7 @@ public record LookResult(
     LocalDate wornDate,
     Long moodId,
     String occasionLabel,
+    String concept,
     List<Long> closetItemIds,
     Long mcmProductId,
     String reason,
@@ -23,6 +24,7 @@ public record LookResult(
         look.getWornDate(),
         look.getMoodId(),
         occasionLabel,
+        look.getConcept(),
         // lazy 컬렉션을 트랜잭션 안에서 강제 초기화·복사 — 참조를 그대로 들고 나가면
         // Jackson 직렬화 시점(tx 밖)에 LazyInitializationException
         List.copyOf(look.getClosetItemIds()),
