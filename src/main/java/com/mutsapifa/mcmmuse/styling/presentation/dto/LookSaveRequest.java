@@ -2,6 +2,7 @@ package com.mutsapifa.mcmmuse.styling.presentation.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,5 +12,6 @@ public record LookSaveRequest(
     @NotEmpty(message = "옷장 아이템을 1개 이상 선택해 주세요") List<Long> closetItemIds,
     @NotNull(message = "코디에 포함된 MCM 제품이 필요합니다") Long mcmProductId,
     String imageUrl,
+    @Size(max = 60, message = "concept은 60자 이하여야 합니다") String concept,
     String reason,
     LocalDate wornDate) {}

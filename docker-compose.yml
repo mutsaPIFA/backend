@@ -45,6 +45,8 @@ services:
       APP_AI_TAGGING: ${APP_AI_TAGGING:-http}
       APP_AI_STANDARDIZE: ${APP_AI_STANDARDIZE:-http}
       APP_AI_OUTFIT_IMAGE: ${APP_AI_OUTFIT_IMAGE:-http}
+      APP_AI_OUTFIT_COMPOSE: ${APP_AI_OUTFIT_COMPOSE:-http}
+      APP_AI_RECOMMEND: ${APP_AI_RECOMMEND:-http}
       APP_AI_BASE_URL: http://ai:8000
     ports:
       - "8080:8080"

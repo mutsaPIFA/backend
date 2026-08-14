@@ -55,6 +55,10 @@ public class Look {
   @Column(name = "mcm_product_id", nullable = false)
   private Long mcmProductId;
 
+  /** 코디 컨셉명 (영어 2~3단어, LLM 작명) — 룰베이스 폴백 후보였으면 null */
+  @Column(length = 60)
+  private String concept;
+
   @Column private String reason;
 
   @Column(name = "generated_image_url")
@@ -78,12 +82,14 @@ public class Look {
       LocalDate wornDate,
       Long moodId,
       Long mcmProductId,
+      String concept,
       String reason,
       List<Long> closetItemIds) {
     this.userId = userId;
     this.wornDate = wornDate;
     this.moodId = moodId;
     this.mcmProductId = mcmProductId;
+    this.concept = concept;
     this.reason = reason;
     this.closetItemIds = new ArrayList<>(closetItemIds);
   }

@@ -125,6 +125,7 @@ public class OutfitService {
     return new OutfitResult(
         mood.getId(),
         mood.occasionLabel(),
+        pick.concept(),
         null, // 화보는 트랜잭션 밖에서 붙인다 (OutfitImageService — 생성 20초간 DB 커넥션 점유 방지)
         items,
         new OutfitResult.McmSummary(

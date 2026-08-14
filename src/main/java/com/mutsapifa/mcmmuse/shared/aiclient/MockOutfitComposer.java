@@ -25,7 +25,8 @@ public class MockOutfitComposer implements OutfitComposer {
       // TODO(추후 수정): OWN 옷 0벌일 때 MCM 단독 후보 1개 반환은 임시 동작.
       // 빈 옷장 UX(옷 등록 유도 등)가 정해지면 재설계.
       AiProduct mcm = mcmCandidates.get(0);
-      return List.of(new OutfitPick(List.of(), mcm.id(), moodLabel + "의 시작점이 되는 " + mcm.name()));
+      return List.of(
+          new OutfitPick(List.of(), mcm.id(), null, moodLabel + "의 시작점이 되는 " + mcm.name()));
     }
 
     int count = Math.min(3, Math.max(bases.size(), Math.min(mcmCandidates.size(), 3)));
@@ -37,6 +38,7 @@ public class MockOutfitComposer implements OutfitComposer {
           new OutfitPick(
               base.stream().map(AiClosetItem::id).toList(),
               mcm.id(),
+              null, // 컨셉 작명은 LLM 몫 — 룰베이스 폴백은 비워둔다 (프론트 미표시)
               moodLabel + "에 어울리는 " + base.get(0).color() + " 조합, " + mcm.name() + "(으)로 포인트"));
     }
     return picks.stream().distinct().toList();

@@ -2,6 +2,8 @@ package com.mutsapifa.mcmmuse.shared.aiclient;
 
 import io.netty.channel.ChannelOption;
 import java.time.Duration;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -13,6 +15,7 @@ import reactor.netty.http.client.HttpClient;
  *
  * <p>준비된 것부터 실물 전환: 누끼(rembg)는 ai 서비스만 띄우면 http 가능, 태깅·표준화는 Gemini 키(billing) 확보 후.
  */
+@Slf4j
 @Configuration
 public class AiClientConfig {
 
@@ -60,14 +63,51 @@ public class AiClientConfig {
   }
 
   @Bean
-  public Recommender recommender(AiProperties properties) {
-    // http 구현은 ai 서비스 /style-dna·/recommend 확정 후 — 그 전까지 룰베이스 mock (폴백으로도 유지)
-    return new MockRecommender();
+  public Recommender recommender(AiProperties properties, WebClient aiWebClient) {
+    MockRecommender fallback = new MockRecommender();
+    if (!properties.recommendHttp()) {
+      return fallback;
+    }
+    // LLM 실패 시 룰베이스로 런타임 폴백 — 데모가 Gemini 가용성에 볼모 잡히지 않게
+    HttpAiClients.HttpRecommender http = new HttpAiClients.HttpRecommender(aiWebClient);
+    return new Recommender() {
+      @Override
+      public StyleDnaResult styleDna(List<AiClosetItem> items) {
+        try {
+          return http.styleDna(items);
+        } catch (Exception e) {
+          log.warn("style-dna LLM 실패 — 룰베이스 폴백: {}", e.getMessage());
+          return fallback.styleDna(items);
+        }
+      }
+
+      @Override
+      public List<RecommendationPick> recommend(
+          List<AiClosetItem> items, List<AiProduct> candidates) {
+        try {
+          return http.recommend(items, candidates);
+        } catch (Exception e) {
+          log.warn("recommend LLM 실패 — 룰베이스 폴백: {}", e.getMessage());
+          return fallback.recommend(items, candidates);
+        }
+      }
+    };
   }
 
   @Bean
-  public OutfitComposer outfitComposer(AiProperties properties) {
-    // http 구현은 ai 서비스 /outfits 확정 후
-    return new MockOutfitComposer();
+  public OutfitComposer outfitComposer(AiProperties properties, WebClient aiWebClient) {
+    MockOutfitComposer fallback = new MockOutfitComposer();
+    if (!properties.outfitComposeHttp()) {
+      return fallback;
+    }
+    HttpAiClients.HttpOutfitComposer http = new HttpAiClients.HttpOutfitComposer(aiWebClient);
+    return (moodLabel, ownItems, mcmCandidates) -> {
+      try {
+        return http.compose(moodLabel, ownItems, mcmCandidates);
+      } catch (Exception e) {
+        log.warn("outfits LLM 실패 — 룰베이스 폴백: {}", e.getMessage());
+        return fallback.compose(moodLabel, ownItems, mcmCandidates);
+      }
+    };
   }
 }

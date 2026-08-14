@@ -38,7 +38,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
       "app.ai.cutout=mock",
       "app.ai.tagging=mock",
       "app.ai.standardize=mock",
-      "app.ai.outfit-image=mock"
+      "app.ai.outfit-image=mock",
+      "app.ai.outfit-compose=mock",
+      "app.ai.recommend=mock"
     })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClosetFlowIntegrationTest {
