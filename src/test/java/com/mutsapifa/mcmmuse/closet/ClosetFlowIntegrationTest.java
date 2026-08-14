@@ -189,7 +189,10 @@ class ClosetFlowIntegrationTest {
                     Material.가죽,
                     890000,
                     "https://img/1.jpg",
-                    "https://mcm/p/1"))
+                    "https://mcm/p/1",
+                    null,
+                    null,
+                    List.of()))
             .getId();
 
     ResponseEntity<Map> res =

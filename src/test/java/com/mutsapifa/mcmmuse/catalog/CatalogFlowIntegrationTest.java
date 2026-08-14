@@ -157,7 +157,10 @@ class CatalogFlowIntegrationTest {
                     Material.가죽,
                     100000,
                     "https://img/x.jpg",
-                    "https://mcm/x"))
+                    "https://mcm/x",
+                    null,
+                    null,
+                    List.of()))
             .getId();
 
     ingestService.ingest(); // 시드에 없으므로 비활성 처리

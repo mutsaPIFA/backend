@@ -3,6 +3,7 @@ package com.mutsapifa.mcmmuse.catalog.application;
 import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Color;
 import com.mutsapifa.mcmmuse.shared.vocab.Material;
+import java.util.List;
 
 /** 적재 원천 데이터 1건 — vocabulary enum 파싱을 통과해야 적재된다 (DB-컨벤션). */
 public record SeedProduct(
@@ -13,4 +14,7 @@ public record SeedProduct(
     Material material,
     Integer price,
     String imageUrl,
-    String productUrl) {}
+    String productUrl,
+    String description,
+    String size,
+    List<String> imageUrls) {}

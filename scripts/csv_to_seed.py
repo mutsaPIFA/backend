@@ -73,6 +73,10 @@ def main() -> None:
                 "price": int(r["priceValue"]),
                 "imageUrl": r["images"].split("|")[0].strip() if r["images"] else "",
                 "productUrl": r["url"].strip(),
+                # 상세 화면(6/7-a)용 — 설명 문단·사이즈·캐러셀 이미지 전체
+                "description": (r.get("longDesc") or r.get("shortDesc") or "").strip() or None,
+                "size": (r.get("sizes") or "").strip() or None,
+                "imageUrls": [u.strip() for u in r["images"].split("|")] if r["images"] else [],
             }
         )
     OUT.parent.mkdir(parents=True, exist_ok=True)

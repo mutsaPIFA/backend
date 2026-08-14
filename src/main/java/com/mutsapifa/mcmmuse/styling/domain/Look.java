@@ -61,6 +61,10 @@ public class Look {
 
   @Column private String reason;
 
+  /** 사용자 소감 — "이 코디 어땠어요?" 자유 텍스트 (AI reason과 별개) */
+  @Column(columnDefinition = "text")
+  private String note;
+
   @Column(name = "generated_image_url")
   private String generatedImageUrl;
 
@@ -83,6 +87,7 @@ public class Look {
       Long moodId,
       Long mcmProductId,
       String concept,
+      String note,
       String reason,
       List<Long> closetItemIds) {
     this.userId = userId;
@@ -90,6 +95,7 @@ public class Look {
     this.moodId = moodId;
     this.mcmProductId = mcmProductId;
     this.concept = concept;
+    this.note = note;
     this.reason = reason;
     this.closetItemIds = new ArrayList<>(closetItemIds);
   }

@@ -82,7 +82,9 @@ public class CurationController {
                               value =
                                   "{\"moodId\":1,\"closetItemIds\":[1,2],\"mcmProductId\":12,"
                                       + "\"imageUrl\":\"<후보 응답의 imageUrl>\","
-                                      + "\"concept\":\"<후보 응답의 concept>\"}")))
+                                      + "\"concept\":\"<후보 응답의 concept>\","
+                                      + "\"note\":\"오늘 옷 센스 있다는 말 들은 날\","
+                                      + "\"wornDate\":\"2026-08-15\"}")))
           @Valid
           @RequestBody
           LookSaveRequest request) {
@@ -94,6 +96,7 @@ public class CurationController {
             request.mcmProductId(),
             request.imageUrl(),
             request.concept(),
+            request.note(),
             request.reason(),
             request.wornDate());
     return ResponseEntity.status(HttpStatus.CREATED).body(result);

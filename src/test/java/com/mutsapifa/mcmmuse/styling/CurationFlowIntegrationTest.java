@@ -149,7 +149,10 @@ class CurationFlowIntegrationTest {
                     Material.가죽,
                     1450000,
                     "https://img/1.jpg",
-                    "https://mcm/1"))
+                    "https://mcm/1",
+                    null,
+                    null,
+                    List.of()))
             .getId();
     // 카탈로그 담기 → 옷장에 source=MCM 아이템 생성
     rest.exchange(
@@ -236,7 +239,7 @@ class CurationFlowIntegrationTest {
 
   @Test
   @Order(20)
-  void 룩저장_후보_화보_imageUrl_수납() {
+  void 룩저장_후보_화보_imageUrl_컨셉_소감_수납() {
     String imageUrl = "http://localhost:8080/images/outfits/test-board.png";
     ResponseEntity<Map> res =
         rest.exchange(
@@ -247,12 +250,16 @@ class CurationFlowIntegrationTest {
                     "moodId", 1,
                     "closetItemIds", outfitItemIds,
                     "mcmProductId", outfitMcmId,
-                    "imageUrl", imageUrl),
+                    "imageUrl", imageUrl,
+                    "concept", "Soft Classic",
+                    "note", "오늘 옷 센스 있다는 말 들은 날"),
                 auth(token)),
             Map.class);
 
     assertThat(res.getStatusCode().value()).isEqualTo(201);
     assertThat(res.getBody().get("generatedImageUrl")).isEqualTo(imageUrl); // 저장 즉시 확정 — 폴링 불필요
+    assertThat(res.getBody().get("concept")).isEqualTo("Soft Classic");
+    assertThat(res.getBody().get("note")).isEqualTo("오늘 옷 센스 있다는 말 들은 날");
   }
 
   @Test

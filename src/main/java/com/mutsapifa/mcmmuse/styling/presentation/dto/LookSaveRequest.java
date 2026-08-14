@@ -13,5 +13,6 @@ public record LookSaveRequest(
     @NotNull(message = "코디에 포함된 MCM 제품이 필요합니다") Long mcmProductId,
     String imageUrl,
     @Size(max = 60, message = "concept은 60자 이하여야 합니다") String concept,
+    @Size(max = 1000, message = "소감은 1000자 이하여야 합니다") String note,
     String reason,
     LocalDate wornDate) {}

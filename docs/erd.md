@@ -34,9 +34,12 @@ erDiagram
         varchar color
         varchar material
         int price "KRW"
-        text image_url
+        text image_url "대표 1장 (목록 카드)"
         text cutout_url "nullable, rembg"
         text product_url "공식몰 PDP"
+        text description "nullable, 상세 설명 (V5)"
+        text item_size "nullable, | 구분 목록 가능 (V5)"
+        text image_urls "| 구분 캐러셀 5~8장 (V5)"
         boolean active "피드 이탈 시 false"
     }
     closet_items {
@@ -61,11 +64,13 @@ erDiagram
     looks {
         bigint id PK
         bigint user_id FK
-        date worn_date "미전송 시 오늘"
+        date worn_date "미전송 시 오늘, 같은 날 여러 룩 허용"
         bigint mood_id FK
         bigint mcm_product_id FK
-        text reason
-        text generated_image_url "nullable, 비동기 생성"
+        varchar concept "nullable 60자, LLM 작명 (V3)"
+        text note "nullable, 사용자 소감 (V4)"
+        text reason "AI 추천 이유"
+        text generated_image_url "nullable, 후보 화보 재사용 — 저장 시 확정"
     }
     look_closet_items {
         bigint look_id PK,FK
@@ -90,6 +95,8 @@ erDiagram
 | `occasion_label` 저장 안 함 | moods 조인으로 조립 | 무드 시드가 아직 Figma 정렬 대기 — 라벨 바뀌면 조인이 알아서 반영 |
 | refresh token DB 저장+회전 | `refresh_tokens` | 로그아웃이 서버에서 실제로 토큰을 무효화 |
 | 상품 재적재 = upsert+active | `sku` UNIQUE, row 삭제 금지 | 옷장·룩 FK 보존, 적재 재실행 안전(멱등) |
+| 긴 텍스트 = `text` | `description`·`note`·`item_size` | Postgres에서 `text`≡`varchar(n)` 성능 동일(TOAST) — 길이 제약은 도메인 규칙일 때만 DB에, 아니면 API 검증(@Size)으로. `item_size`는 varchar(40)로 잡았다가 신발 사이즈 목록 140자 실측으로 교정 |
+| `image_urls` = 파이프 text (비정규화) | `AttributeConverter`로 `List<String>` 캡슐화 | 개별 이미지 질의·수정 API가 없고 항상 통째 교체(시드 upsert) — 관계 테이블은 조인·컬렉션 upsert 복잡도만 추가. URL엔 `\|` 불가라 안전. 개별 질의가 필요해지면 그때 V(n)으로 정규화 |
 
 ## 주요 쿼리 ↔ 인덱스
 
