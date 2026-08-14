@@ -17,4 +17,10 @@ public interface StorageService {
 
   /** key → 프론트가 바로 쓰는 절대 URL */
   String resolveUrl(String key);
+
+  /** 저장된 이미지 로드 — 화보 합성 입력 등 서버 내부 소비용 */
+  byte[] load(String key);
+
+  /** 절대 URL → key. 이 저장소가 서빙하는 URL이 아니면 null (외부 URL 판별용). */
+  String keyOf(String url);
 }

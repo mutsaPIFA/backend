@@ -33,6 +33,14 @@ management:
       exposure:
         include: health, info
 
+# Swagger UI — 수동 검증 편의 설정
+springdoc:
+  swagger-ui:
+    try-it-out-enabled: true         # Try it out 기본 활성화 (클릭 한 번 절약)
+    persist-authorization: true      # 새로고침해도 Authorize 토큰 유지
+    display-request-duration: true
+    default-models-expand-depth: -1  # 하단 Schemas 섹션 접기
+
 # ---------------------------------------------------------------------------
 # 애플리케이션 설정
 # ---------------------------------------------------------------------------
@@ -57,12 +65,14 @@ app:
     public-base-url: http://localhost:8080/images
 
   # AI 서비스 연동 — 포트별 스위치(mock | http). 준비된 것부터 실물 전환.
-  # cutout: ai 서비스(rembg)만 띄우면 http 가능 (키 불필요)
-  # tagging / standardize: Gemini billing 키 확보 후 http
+  # cutout·tagging·standardize: http 기본 — ai 서비스(:8000)가 떠 있어야 한다. ai가 죽으면 스캔은 409(재스캔 유도).
+  # standardize는 billing 키 필요(무료 티어는 이미지 생성 할당 0) — 키가 무료면 스캔은 원본 폴백으로 동작.
+  # 통합 테스트는 각 테스트 클래스에서 mock으로 고정한다 — ai 서비스·Gemini 가용성에 비종속.
   ai:
     base-url: http://localhost:8000
-    timeout: 90s           # Gemini 무료 티어 첫 콜 스로틀 ~79s 실측 — 여유 있게
-    cutout: mock
-    tagging: mock
-    standardize: mock
+    timeout: 90s           # Gemini 첫 콜 스로틀(~79s 실측) + 표준화 이미지 생성(~18s 실측) 대비
+    cutout: http
+    tagging: http
+    standardize: http
+    outfit-image: http     # 코디 후보 화보 — mock이면 imageUrl=null(프론트 콜라주 폴백)
     recommend: mock        # DNA·MCM추천 — mock=룰베이스(데모 가능 수준)

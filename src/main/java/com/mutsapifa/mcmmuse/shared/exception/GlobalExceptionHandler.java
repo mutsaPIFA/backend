@@ -1,5 +1,7 @@
 package com.mutsapifa.mcmmuse.shared.exception;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +36,21 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(ApiError.of(400, message));
   }
 
-  /** body 파싱 실패 — vocabulary 밖 enum 값("빨강"), 형식 오류 등 */
+  /** body 파싱 실패 — JSON 문법 오류와 vocabulary 밖 값을 구분해 내려준다 (뭉뚱그리면 디버깅 불가) */
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ApiError> handleUnreadable(HttpMessageNotReadableException e) {
+    if (e.getCause() instanceof InvalidFormatException ife) {
+      String field =
+          ife.getPath().isEmpty() || ife.getPath().get(ife.getPath().size() - 1).getFieldName() == null
+              ? ""
+              : ife.getPath().get(ife.getPath().size() - 1).getFieldName() + ": ";
+      return ResponseEntity.badRequest()
+          .body(ApiError.of(400, field + "허용되지 않는 값입니다 — " + ife.getValue()));
+    }
+    if (e.getCause() instanceof JsonProcessingException) {
+      return ResponseEntity.badRequest()
+          .body(ApiError.of(400, "body가 올바른 JSON이 아닙니다 — 쉼표·따옴표·괄호를 확인해 주세요"));
+    }
     return ResponseEntity.badRequest().body(ApiError.of(400, "값이 올바르지 않습니다"));
   }
 

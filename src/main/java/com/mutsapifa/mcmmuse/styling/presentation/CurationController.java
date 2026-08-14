@@ -1,6 +1,7 @@
 package com.mutsapifa.mcmmuse.styling.presentation;
 
 import com.mutsapifa.mcmmuse.styling.application.LookService;
+import com.mutsapifa.mcmmuse.styling.application.OutfitImageService;
 import com.mutsapifa.mcmmuse.styling.application.OutfitService;
 import com.mutsapifa.mcmmuse.styling.application.dto.LookResult;
 import com.mutsapifa.mcmmuse.styling.application.dto.OutfitResult;
@@ -26,12 +27,17 @@ public class CurationController {
 
   private final MoodRepository moodRepository;
   private final OutfitService outfitService;
+  private final OutfitImageService outfitImageService;
   private final LookService lookService;
 
   public CurationController(
-      MoodRepository moodRepository, OutfitService outfitService, LookService lookService) {
+      MoodRepository moodRepository,
+      OutfitService outfitService,
+      OutfitImageService outfitImageService,
+      LookService lookService) {
     this.moodRepository = moodRepository;
     this.outfitService = outfitService;
+    this.outfitImageService = outfitImageService;
     this.lookService = lookService;
   }
 
@@ -44,20 +50,48 @@ public class CurationController {
   /** §4-4 — 코디 후보 최대 3 (미저장) */
   @PostMapping("/api/v1/outfits")
   public List<OutfitResult> outfits(
-      @AuthenticationPrincipal Long userId, @Valid @RequestBody OutfitComposeRequest request) {
-    return outfitService.compose(userId, request.moodId(), request.seedMcmProductId());
+      @AuthenticationPrincipal Long userId,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      examples = {
+                        @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "무드만", value = "{\"moodId\":1}"),
+                        @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "시드 제품 고정",
+                            value = "{\"moodId\":1,\"seedMcmProductId\":12}")
+                      }))
+          @Valid
+          @RequestBody
+          OutfitComposeRequest request) {
+    // 화보 생성(후보 병렬, 실측 20~40초)은 트랜잭션 밖 — 프론트는 "생성 중" 로딩 연출 (계약 §4-4)
+    return outfitImageService.attachImages(
+        outfitService.compose(userId, request.moodId(), request.seedMcmProductId()));
   }
 
   /** §4-5 — 룩 저장 (즉시 201, 이미지는 비동기) */
   @PostMapping("/api/v1/looks")
   public ResponseEntity<LookResult> saveLook(
-      @AuthenticationPrincipal Long userId, @Valid @RequestBody LookSaveRequest request) {
+      @AuthenticationPrincipal Long userId,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              name = "룩 저장",
+                              value =
+                                  "{\"moodId\":1,\"closetItemIds\":[1,2],\"mcmProductId\":12,"
+                                      + "\"imageUrl\":\"<후보 응답의 imageUrl>\"}")))
+          @Valid
+          @RequestBody
+          LookSaveRequest request) {
     LookResult result =
         lookService.save(
             userId,
             request.moodId(),
             request.closetItemIds(),
             request.mcmProductId(),
+            request.imageUrl(),
             request.reason(),
             request.wornDate());
     return ResponseEntity.status(HttpStatus.CREATED).body(result);

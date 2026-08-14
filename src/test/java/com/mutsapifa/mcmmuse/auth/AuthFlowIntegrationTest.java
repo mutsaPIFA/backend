@@ -22,7 +22,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 /** auth 전체 플로우 — 실제 PostgreSQL(Testcontainers) 위에서 계약(api-v1.md §1) 검증. */
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {
+      "app.ai.cutout=mock",
+      "app.ai.tagging=mock",
+      "app.ai.standardize=mock",
+      "app.ai.outfit-image=mock"
+    })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuthFlowIntegrationTest {
 

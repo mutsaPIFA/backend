@@ -32,8 +32,30 @@ public class ClosetItemController {
   /** 계약 §3-2(스캔 결과) / §3-3(카탈로그 담기) — mcmProductId 유무로 분기 */
   @PostMapping
   public ResponseEntity<ClosetItemResponse> register(
-      @AuthenticationPrincipal Long userId, @RequestBody ClosetItemRegisterRequest request) {
+      @AuthenticationPrincipal Long userId,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      examples = {
+                        @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "스캔 결과 등록",
+                            value =
+                                "{\"source\":\"OWN\",\"category\":\"상의\",\"color\":\"그레이\","
+                                    + "\"material\":\"면\",\"mood\":\"캐주얼\","
+                                    + "\"imageUrl\":\"<스캔 응답의 originalUrl>\","
+                                    + "\"cutoutUrl\":\"<스캔 응답의 cutoutUrl>\"}"),
+                        @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            name = "카탈로그 담기",
+                            value = "{\"mcmProductId\":12}")
+                      }))
+          @RequestBody
+          ClosetItemRegisterRequest request) {
     ClosetItem item;
+    if (request.isCatalogAdd() && request.hasScanFields()) {
+      // 두 모드의 body가 섞이면 어느 쪽 의도인지 알 수 없다 — 담기로 오인해 404 내는 것보다 명확한 400
+      throw new BusinessException(
+          HttpStatus.BAD_REQUEST, "mcmProductId는 카탈로그 담기 전용입니다 — 스캔 결과 등록과 함께 보낼 수 없습니다");
+    }
     if (request.isCatalogAdd()) {
       item = closetItemService.registerFromCatalog(userId, request.mcmProductId());
     } else if (request.hasScanFields()) {

@@ -33,7 +33,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"app.storage.local-path=build/test-uploads"})
+    properties = {
+      "app.storage.local-path=build/test-uploads",
+      "app.ai.cutout=mock",
+      "app.ai.tagging=mock",
+      "app.ai.standardize=mock",
+      "app.ai.outfit-image=mock"
+    })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClosetFlowIntegrationTest {
 

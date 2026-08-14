@@ -15,6 +15,7 @@ public record AiProperties(
     String cutout,
     String tagging,
     String standardize,
+    String outfitImage,
     String recommend) {
 
   public boolean cutoutHttp() {
@@ -27,6 +28,10 @@ public record AiProperties(
 
   public boolean standardizeHttp() {
     return "http".equals(standardize);
+  }
+
+  public boolean outfitImageHttp() {
+    return "http".equals(outfitImage);
   }
 
   public boolean recommendHttp() {

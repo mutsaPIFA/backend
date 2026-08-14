@@ -52,6 +52,14 @@ public class AiClientConfig {
   }
 
   @Bean
+  public OutfitImageGenerator outfitImageGenerator(AiProperties properties, WebClient aiWebClient) {
+    // mock = 생성 안 함(null) — 후보 imageUrl=null이면 프론트가 누끼 콜라주로 폴백 (계약 §4-4)
+    return properties.outfitImageHttp()
+        ? new HttpAiClients.HttpOutfitImageGenerator(aiWebClient)
+        : images -> null;
+  }
+
+  @Bean
   public Recommender recommender(AiProperties properties) {
     // http 구현은 ai 서비스 /style-dna·/recommend 확정 후 — 그 전까지 룰베이스 mock (폴백으로도 유지)
     return new MockRecommender();
@@ -61,11 +69,5 @@ public class AiClientConfig {
   public OutfitComposer outfitComposer(AiProperties properties) {
     // http 구현은 ai 서비스 /outfits 확정 후
     return new MockOutfitComposer();
-  }
-
-  @Bean
-  public LookImageGenerator lookImageGenerator(AiProperties properties) {
-    // mock = 생성 안 함(null) — 계약상 generatedImageUrl null 허용. Gemini http 전환 시 실물로 교체
-    return (itemCutoutUrls, mcmImageUrl) -> null;
   }
 }

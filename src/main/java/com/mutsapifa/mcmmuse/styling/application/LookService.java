@@ -11,6 +11,7 @@ import com.mutsapifa.mcmmuse.styling.domain.exception.LookNotFoundException;
 import com.mutsapifa.mcmmuse.styling.domain.exception.MoodNotFoundException;
 import com.mutsapifa.mcmmuse.styling.infrastructure.LookRepository;
 import com.mutsapifa.mcmmuse.styling.infrastructure.MoodRepository;
+import com.mutsapifa.mcmmuse.shared.storage.StorageService;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -18,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 계약 §4-5~4-7 — 룩 저장(택1)·단건 폴링·목록. 이미지 생성은 비동기(LookImageService). */
+/** 계약 §4-5~4-7 — 룩 저장(택1)·단건·목록. 화보는 후보(§4-4)에서 생성된 것을 재사용 — 저장 시 재생성 없음. */
 @Service
 @Transactional
 public class LookService {
@@ -27,27 +28,28 @@ public class LookService {
   private final MoodRepository moodRepository;
   private final McmProductRepository mcmProductRepository;
   private final ClosetItemRepository closetItemRepository;
-  private final LookImageService lookImageService;
+  private final StorageService storageService;
 
   public LookService(
       LookRepository lookRepository,
       MoodRepository moodRepository,
       McmProductRepository mcmProductRepository,
       ClosetItemRepository closetItemRepository,
-      LookImageService lookImageService) {
+      StorageService storageService) {
     this.lookRepository = lookRepository;
     this.moodRepository = moodRepository;
     this.mcmProductRepository = mcmProductRepository;
     this.closetItemRepository = closetItemRepository;
-    this.lookImageService = lookImageService;
+    this.storageService = storageService;
   }
 
-  /** 저장 즉시 201 — 이미지 생성은 백그라운드 (계약 D2). wornDate 미전송 시 오늘 (D9). */
+  /** 저장 즉시 201 + generatedImageUrl 확정 (후보 화보 재사용). wornDate 미전송 시 오늘 (D9). */
   public LookResult save(
       Long userId,
       Long moodId,
       List<Long> closetItemIds,
       Long mcmProductId,
+      String imageUrl,
       String reason,
       LocalDate wornDate) {
     Mood mood = moodRepository.findById(moodId).orElseThrow(MoodNotFoundException::new);
@@ -60,17 +62,24 @@ public class LookService {
       throw new BusinessException(HttpStatus.FORBIDDEN, "권한이 없습니다");
     }
 
-    Look look =
-        lookRepository.save(
-            new Look(
-                userId,
-                wornDate != null ? wornDate : LocalDate.now(),
-                moodId,
-                mcmProductId,
-                reason,
-                closetItemIds));
+    // 화보 URL은 우리 스토리지가 서빙하는 것만 수납 — 임의 외부 URL이 룩에 박히는 것 방지
+    if (imageUrl != null && !imageUrl.isBlank() && storageService.keyOf(imageUrl) == null) {
+      throw new BusinessException(
+          HttpStatus.BAD_REQUEST, "imageUrl: 코디 후보 응답의 imageUrl만 사용할 수 있습니다");
+    }
 
-    lookImageService.generateAsync(look.getId()); // 비동기 — 완료 시 generatedImageUrl 채움
+    Look look =
+        new Look(
+            userId,
+            wornDate != null ? wornDate : LocalDate.now(),
+            moodId,
+            mcmProductId,
+            reason,
+            closetItemIds);
+    if (imageUrl != null && !imageUrl.isBlank()) {
+      look.assignGeneratedImage(imageUrl);
+    }
+    look = lookRepository.save(look);
 
     return LookResult.from(look, mood.occasionLabel());
   }
