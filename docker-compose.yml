@@ -1,9 +1,9 @@
 # MCM MUSE 통합 오케스트레이션 (루트 compose — backend 레포가 소유)
 #
 #   docker compose up -d postgres     # DB만 띄우고 백엔드는 IntelliJ에서 실행 (개발 중 권장)
-#   docker compose up --build         # 전체 통합 실행
+#   docker compose up --build         # 전체 통합 실행 (../ai 레포가 클론돼 있어야 빌드된다)
 #
-# ai 서비스는 ../ai 레포를 클론해 둔 상태에서만 빌드된다.
+# GEMINI_API_KEY 는 셸 환경변수 또는 이 폴더의 .env(gitignore)로 주입한다.
 
 services:
   postgres:
@@ -31,13 +31,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ai:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mcmmuse
       DB_USERNAME: ${DB_USERNAME:-mcmmuse}
       DB_PASSWORD: ${DB_PASSWORD:-mcmmuse}
       JWT_SECRET: ${JWT_SECRET}
-      APP_AI_MODE: ${APP_AI_MODE:-mock}
+      # AI 포트별 스위치 — compose에선 ai 컨테이너가 항상 있으므로 기본 http.
+      # standardize는 billing 키 필요 — 키가 무료 티어면 스캔이 원본 폴백으로 동작한다.
+      APP_AI_CUTOUT: ${APP_AI_CUTOUT:-http}
+      APP_AI_TAGGING: ${APP_AI_TAGGING:-http}
+      APP_AI_STANDARDIZE: ${APP_AI_STANDARDIZE:-http}
+      APP_AI_OUTFIT_IMAGE: ${APP_AI_OUTFIT_IMAGE:-http}
       APP_AI_BASE_URL: http://ai:8000
     ports:
       - "8080:8080"
@@ -51,9 +58,12 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
     ports:
       - "8000:8000"
-    profiles:
-      # ai 레포가 준비되기 전엔 뜨지 않도록: docker compose --profile ai up
-      - ai
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s   # rembg u2net 로드 ~11s
 
 volumes:
   postgres-data:

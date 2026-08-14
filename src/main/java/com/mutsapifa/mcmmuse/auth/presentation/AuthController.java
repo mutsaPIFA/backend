@@ -38,7 +38,19 @@ public class AuthController {
   }
 
   @PostMapping("/register")
-  public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+  public ResponseEntity<RegisterResponse> register(
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              name = "예시",
+                              value =
+                                  "{\"email\":\"demo@test.com\",\"password\":\"password123\","
+                                      + "\"nickname\":\"데모\"}")))
+          @Valid
+          @RequestBody
+          RegisterRequest request) {
     AuthResult result =
         authService.register(request.email(), request.password(), request.nickname());
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -47,7 +59,18 @@ public class AuthController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+  public ResponseEntity<TokenResponse> login(
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              content =
+                  @io.swagger.v3.oas.annotations.media.Content(
+                      examples =
+                          @io.swagger.v3.oas.annotations.media.ExampleObject(
+                              name = "스모크 계정",
+                              value =
+                                  "{\"email\":\"smoke0814@test.com\",\"password\":\"smoketest1!\"}")))
+          @Valid
+          @RequestBody
+          LoginRequest request) {
     AuthResult result = authService.login(request.email(), request.password());
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshToken()).toString())

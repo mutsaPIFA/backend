@@ -10,5 +10,6 @@ public record LookSaveRequest(
     @NotNull(message = "무드를 선택해 주세요") Long moodId,
     @NotEmpty(message = "옷장 아이템을 1개 이상 선택해 주세요") List<Long> closetItemIds,
     @NotNull(message = "코디에 포함된 MCM 제품이 필요합니다") Long mcmProductId,
+    String imageUrl,
     String reason,
     LocalDate wornDate) {}

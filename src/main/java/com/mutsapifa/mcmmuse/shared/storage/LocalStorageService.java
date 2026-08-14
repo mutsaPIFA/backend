@@ -36,4 +36,20 @@ public class LocalStorageService implements StorageService {
   public String resolveUrl(String key) {
     return properties.publicBaseUrl() + "/" + key;
   }
+
+  @Override
+  public byte[] load(String key) {
+    Path target = Path.of(properties.localPath()).resolve(key);
+    try {
+      return Files.readAllBytes(target);
+    } catch (IOException e) {
+      throw new UncheckedIOException("이미지 로드 실패: " + key, e);
+    }
+  }
+
+  @Override
+  public String keyOf(String url) {
+    String prefix = properties.publicBaseUrl() + "/";
+    return url != null && url.startsWith(prefix) ? url.substring(prefix.length()) : null;
+  }
 }

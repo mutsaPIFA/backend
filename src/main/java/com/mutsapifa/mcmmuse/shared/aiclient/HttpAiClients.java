@@ -4,6 +4,7 @@ import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Color;
 import com.mutsapifa.mcmmuse.shared.vocab.ItemMood;
 import com.mutsapifa.mcmmuse.shared.vocab.Material;
+import java.util.List;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -68,6 +69,39 @@ public final class HttpAiClients {
           .post()
           .uri("/vision/standardize")
           .body(imagePart(image))
+          .retrieve()
+          .bodyToMono(byte[].class)
+          .block();
+    }
+  }
+
+  /** POST /outfits/image → flat-lay 화보 바이너리 (실측 14~31s/장 — 호출부가 후보별 병렬 처리) */
+  public static class HttpOutfitImageGenerator implements OutfitImageGenerator {
+    private final WebClient client;
+
+    public HttpOutfitImageGenerator(WebClient client) {
+      this.client = client;
+    }
+
+    @Override
+    public byte[] generate(List<byte[]> images) {
+      MultipartBodyBuilder builder = new MultipartBodyBuilder();
+      for (byte[] image : images) {
+        builder
+            .part(
+                "images",
+                new ByteArrayResource(image) {
+                  @Override
+                  public String getFilename() {
+                    return "image.png";
+                  }
+                })
+            .contentType(MediaType.APPLICATION_OCTET_STREAM);
+      }
+      return client
+          .post()
+          .uri("/outfits/image")
+          .body(BodyInserters.fromMultipartData(builder.build()))
           .retrieve()
           .bodyToMono(byte[].class)
           .block();

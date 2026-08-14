@@ -30,7 +30,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"app.storage.local-path=build/test-uploads"})
+    properties = {
+      "app.storage.local-path=build/test-uploads",
+      "app.ai.cutout=mock",
+      "app.ai.tagging=mock",
+      "app.ai.standardize=mock",
+      "app.ai.outfit-image=mock"
+    })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CurationFlowIntegrationTest {
 
@@ -221,9 +227,49 @@ class CurationFlowIntegrationTest {
 
     assertThat(res.getStatusCode().value()).isEqualTo(201);
     assertThat(res.getBody().get("wornDate")).isEqualTo(LocalDate.now().toString());
-    assertThat(res.getBody().get("generatedImageUrl")).isNull(); // mock — 비동기 스킵
+    assertThat(res.getBody().get("generatedImageUrl")).isNull(); // imageUrl 미전달 — null 유지
     assertThat(res.getBody().get("occasionLabel")).isEqualTo("저녁 약속 / DINNER DATE");
     lookId = ((Number) res.getBody().get("id")).longValue();
+  }
+
+  @Test
+  @Order(20)
+  void 룩저장_후보_화보_imageUrl_수납() {
+    String imageUrl = "http://localhost:8080/images/outfits/test-board.png";
+    ResponseEntity<Map> res =
+        rest.exchange(
+            "/api/v1/looks",
+            HttpMethod.POST,
+            new HttpEntity<>(
+                Map.of(
+                    "moodId", 1,
+                    "closetItemIds", outfitItemIds,
+                    "mcmProductId", outfitMcmId,
+                    "imageUrl", imageUrl),
+                auth(token)),
+            Map.class);
+
+    assertThat(res.getStatusCode().value()).isEqualTo(201);
+    assertThat(res.getBody().get("generatedImageUrl")).isEqualTo(imageUrl); // 저장 즉시 확정 — 폴링 불필요
+  }
+
+  @Test
+  @Order(21)
+  void 룩저장_외부_imageUrl_400() {
+    ResponseEntity<Map> res =
+        rest.exchange(
+            "/api/v1/looks",
+            HttpMethod.POST,
+            new HttpEntity<>(
+                Map.of(
+                    "moodId", 1,
+                    "closetItemIds", outfitItemIds,
+                    "mcmProductId", outfitMcmId,
+                    "imageUrl", "https://malicious.example.com/x.png"),
+                auth(token)),
+            Map.class);
+
+    assertThat(res.getStatusCode().value()).isEqualTo(400); // 우리 스토리지 URL만 수납
   }
 
   @Test

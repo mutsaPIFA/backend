@@ -1,5 +1,6 @@
 package com.mutsapifa.mcmmuse.closet.presentation.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Color;
 import com.mutsapifa.mcmmuse.shared.vocab.ItemMood;
@@ -26,6 +27,8 @@ public record ClosetItemRegisterRequest(
     String cutoutUrl,
     Long mcmProductId) {
 
+  // 파생 헬퍼 — Jackson 프로퍼티로 인식돼 Swagger 예시 body에 "catalogAdd"로 새는 것 차단
+  @JsonIgnore
   public boolean isCatalogAdd() {
     return mcmProductId != null;
   }
