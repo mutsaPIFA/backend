@@ -4,6 +4,7 @@ import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Color;
 import com.mutsapifa.mcmmuse.shared.vocab.Material;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,6 +72,19 @@ public class McmProduct {
   @Column(name = "product_url", nullable = false)
   private String productUrl;
 
+  /** 상세 설명 문단 (화면 6 — 원천 longDesc) */
+  @Column(columnDefinition = "text")
+  private String description;
+
+  /** 사이즈 표기 — '|' 구분 목록일 수 있음 (예: "미니", "S", 신발은 사이즈 리스트) */
+  @Column(name = "item_size", columnDefinition = "text")
+  private String size;
+
+  /** 상세 캐러셀 이미지 전체(대표 imageUrl 포함) — 파이프 구분 저장 */
+  @Convert(converter = StringListConverter.class)
+  @Column(name = "image_urls", columnDefinition = "text")
+  private List<String> imageUrls = new ArrayList<>();
+
   /** 피드에서 사라지면 false — 카탈로그 조회에서만 숨는다 */
   @Column(nullable = false)
   private boolean active = true;
@@ -89,7 +105,10 @@ public class McmProduct {
       Material material,
       Integer price,
       String imageUrl,
-      String productUrl) {
+      String productUrl,
+      String description,
+      String size,
+      List<String> imageUrls) {
     this.sku = sku;
     this.name = name;
     this.category = category;
@@ -98,6 +117,9 @@ public class McmProduct {
     this.price = price;
     this.imageUrl = imageUrl;
     this.productUrl = productUrl;
+    this.description = description;
+    this.size = size;
+    this.imageUrls = imageUrls != null ? new ArrayList<>(imageUrls) : new ArrayList<>();
   }
 
   /** 재적재(upsert) 시 갱신 — sku·cutoutUrl은 건드리지 않는다 */
@@ -108,7 +130,10 @@ public class McmProduct {
       Material material,
       Integer price,
       String imageUrl,
-      String productUrl) {
+      String productUrl,
+      String description,
+      String size,
+      List<String> imageUrls) {
     this.name = name;
     this.category = category;
     this.color = color;
@@ -116,6 +141,9 @@ public class McmProduct {
     this.price = price;
     this.imageUrl = imageUrl;
     this.productUrl = productUrl;
+    this.description = description;
+    this.size = size;
+    this.imageUrls = imageUrls != null ? new ArrayList<>(imageUrls) : new ArrayList<>();
     this.active = true;
   }
 

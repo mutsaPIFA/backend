@@ -51,6 +51,7 @@ public class LookService {
       Long mcmProductId,
       String imageUrl,
       String concept,
+      String note,
       String reason,
       LocalDate wornDate) {
     Mood mood = moodRepository.findById(moodId).orElseThrow(MoodNotFoundException::new);
@@ -76,6 +77,7 @@ public class LookService {
             moodId,
             mcmProductId,
             concept,
+            note,
             reason,
             closetItemIds);
     if (imageUrl != null && !imageUrl.isBlank()) {
@@ -101,7 +103,7 @@ public class LookService {
   public List<LookResult> list(Long userId, String month) {
     List<Look> looks;
     if (month == null || month.isBlank()) {
-      looks = lookRepository.findByUserIdOrderByWornDateDesc(userId);
+      looks = lookRepository.findByUserIdOrderByWornDateDescCreatedAtDesc(userId);
     } else {
       YearMonth ym;
       try {
@@ -110,7 +112,7 @@ public class LookService {
         throw new BusinessException(HttpStatus.BAD_REQUEST, "month: yyyy-MM 형식이어야 합니다");
       }
       looks =
-          lookRepository.findByUserIdAndWornDateBetweenOrderByWornDateDesc(
+          lookRepository.findByUserIdAndWornDateBetweenOrderByWornDateDescCreatedAtDesc(
               userId, ym.atDay(1), ym.atEndOfMonth());
     }
     return looks.stream().map(l -> LookResult.from(l, occasionLabelOf(l))).toList();

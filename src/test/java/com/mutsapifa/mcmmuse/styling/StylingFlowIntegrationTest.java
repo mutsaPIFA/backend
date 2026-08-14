@@ -113,7 +113,10 @@ class StylingFlowIntegrationTest {
             Material.가죽,
             1450000,
             "https://img/1.jpg",
-            "https://mcm/1"));
+            "https://mcm/1",
+            null,
+            null,
+            List.of()));
     mcmProductRepository.save(
         new McmProduct(
             "STYSKU002",
@@ -123,7 +126,10 @@ class StylingFlowIntegrationTest {
             Material.면,
             830000,
             "https://img/2.jpg",
-            "https://mcm/2"));
+            "https://mcm/2",
+            null,
+            null,
+            List.of()));
     mcmProductRepository.save(
         new McmProduct(
             "STYSKU003",
@@ -133,7 +139,10 @@ class StylingFlowIntegrationTest {
             Material.가죽,
             350000,
             "https://img/3.jpg",
-            "https://mcm/3"));
+            "https://mcm/3",
+            null,
+            null,
+            List.of()));
     assertThat(itemNavyTop).isNotNull();
   }
 

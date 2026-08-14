@@ -14,6 +14,7 @@ public record LookResult(
     String concept,
     List<Long> closetItemIds,
     Long mcmProductId,
+    String note,
     String reason,
     String generatedImageUrl) {
 
@@ -29,6 +30,7 @@ public record LookResult(
         // Jackson 직렬화 시점(tx 밖)에 LazyInitializationException
         List.copyOf(look.getClosetItemIds()),
         look.getMcmProductId(),
+        look.getNote(),
         look.getReason(),
         look.getGeneratedImageUrl());
   }
