@@ -105,6 +105,16 @@ public class Look {
     this.generatedImageUrl = url;
   }
 
+  /** 부분 수정 (계약 §4-9) — null 인자는 유지. 소감은 빈 문자열이 오면 제거. */
+  public void edit(String note, LocalDate wornDate) {
+    if (note != null) {
+      this.note = note.isBlank() ? null : note;
+    }
+    if (wornDate != null) {
+      this.wornDate = wornDate;
+    }
+  }
+
   public boolean isOwnedBy(Long userId) {
     return this.userId.equals(userId);
   }

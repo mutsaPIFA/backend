@@ -118,6 +118,17 @@ public class LookService {
     return looks.stream().map(l -> LookResult.from(l, occasionLabelOf(l))).toList();
   }
 
+  /** 부분 수정 (계약 §4-9) — 소감·날짜만. null 필드는 유지, 소감 빈 문자열은 제거. */
+  @Transactional
+  public LookResult edit(Long userId, Long lookId, String note, LocalDate wornDate) {
+    Look look = lookRepository.findById(lookId).orElseThrow(LookNotFoundException::new);
+    if (!look.isOwnedBy(userId)) {
+      throw new BusinessException(HttpStatus.FORBIDDEN, "권한이 없습니다");
+    }
+    look.edit(note, wornDate);
+    return LookResult.from(look, occasionLabelOf(look));
+  }
+
   /** 기록 취소 (계약 §4-8) — 완전 삭제. 취소 후 같은 후보를 다시 기록할 수 있다. */
   @Transactional
   public void delete(Long userId, Long lookId) {

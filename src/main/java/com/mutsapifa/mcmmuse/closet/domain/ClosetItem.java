@@ -42,6 +42,10 @@ public class ClosetItem {
   @Column(name = "user_id", nullable = false)
   private Long userId;
 
+  /** 사용자 지정 명칭 (계약 §3-6) — null이면 프론트가 태그 조합으로 표시명을 만든다 */
+  @Column(name = "custom_name", length = 30)
+  private String customName;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   private Category category;
@@ -118,6 +122,27 @@ public class ClosetItem {
         new ClosetItem(userId, category, color, material, mood, imageUrl, cutoutUrl, Source.MCM);
     item.mcmProductId = mcmProductId;
     return item;
+  }
+
+  /**
+   * 부분 수정 (계약 §3-6) — null 인자는 유지. 명칭은 빈 문자열이 오면 제거(태그 조합 표시로 복귀).
+   */
+  public void edit(String name, Category category, Color color, Material material, ItemMood mood) {
+    if (name != null) {
+      this.customName = name.isBlank() ? null : name.trim();
+    }
+    if (category != null) {
+      this.category = category;
+    }
+    if (color != null) {
+      this.color = color;
+    }
+    if (material != null) {
+      this.material = material;
+    }
+    if (mood != null) {
+      this.mood = mood;
+    }
   }
 
   /** 소프트 삭제 — 옷장 목록에서만 사라진다 */

@@ -8,6 +8,9 @@ erDiagram
     users ||--o{ refresh_tokens : ""
     users ||--o{ closet_items : ""
     users ||--o{ looks : ""
+    users ||--o| user_style_dna : "최근 DNA 1:1 (V7)"
+    users ||--o{ wishlist_items : "(V7)"
+    mcm_products ||--o{ wishlist_items : "(V7)"
     mcm_products |o--o{ closet_items : "카탈로그 담기(source=MCM)"
     mcm_products ||--o{ looks : "코디당 정확히 1개"
     moods ||--o{ looks : ""
@@ -19,6 +22,7 @@ erDiagram
         varchar email UK
         varchar password "BCrypt"
         varchar nickname
+        text avatar_url "nullable, 프로필 이미지 (V7)"
     }
     refresh_tokens {
         bigint id PK
@@ -47,6 +51,7 @@ erDiagram
     closet_items {
         bigint id PK
         bigint user_id FK
+        varchar custom_name "nullable 30자, 사용자 명칭 (V7)"
         varchar category "vocabulary"
         varchar color
         varchar material
@@ -78,14 +83,26 @@ erDiagram
         bigint look_id PK,FK
         bigint closet_item_id PK,FK
     }
+    user_style_dna {
+        bigint user_id PK,FK "1:1 (V7)"
+        text summary
+        text dominant_colors "| 구분"
+        text dominant_moods "| 구분"
+        text keywords "| 구분"
+    }
+    wishlist_items {
+        bigint id PK
+        bigint user_id FK
+        bigint mcm_product_id FK "UNIQUE(user, product) (V7)"
+    }
 ```
 
 (공통 컬럼 `created_at`/`updated_at`은 그림에서 생략)
 
 ## transient — 테이블이 없는 것들
 
-`StyleDna` · `Recommendation` · `Outfit`(코디 후보)은 **매 호출 생성·미저장**(계약 Q9). DTO로만 존재한다.
-저장되는 건 사용자가 택1한 `Look`뿐.
+`Recommendation` · `Outfit`(코디 후보)은 **매 호출 생성·미저장**(계약 Q9). DTO로만 존재한다.
+`StyleDna`는 응답 자체는 매번 생성하되 **최근 1건만 `user_style_dna`에 스냅샷**(V7, 프로필 카드용). 저장되는 건 그 스냅샷과 사용자가 택1한 `Look`뿐.
 
 ## 설계 결정 요약
 
@@ -98,6 +115,8 @@ erDiagram
 | refresh token DB 저장+회전 | `refresh_tokens` | 로그아웃이 서버에서 실제로 토큰을 무효화 |
 | 상품 재적재 = upsert+active | `sku` UNIQUE, row 삭제 금지 | 옷장·룩 FK 보존, 적재 재실행 안전(멱등) |
 | 긴 텍스트 = `text` | `description`·`note`·`item_size` | Postgres에서 `text`≡`varchar(n)` 성능 동일(TOAST) — 길이 제약은 도메인 규칙일 때만 DB에, 아니면 API 검증(@Size)으로. `item_size`는 varchar(40)로 잡았다가 신발 사이즈 목록 140자 실측으로 교정 |
+| DNA 스냅샷 = 1:1 테이블 | `user_style_dna` (user_id PK) | users 컬럼 오염 없이 통째 교체(upsert) — 이력이 필요해지면 그때 확장 |
+| 찜 = 관계 테이블+UNIQUE | `wishlist_items` UNIQUE(user, product) | 멱등 add/remove를 DB 레벨에서 보장 |
 | `image_urls` = 파이프 text (비정규화) | `AttributeConverter`로 `List<String>` 캡슐화 | 개별 이미지 질의·수정 API가 없고 항상 통째 교체(시드 upsert) — 관계 테이블은 조인·컬렉션 upsert 복잡도만 추가. URL엔 `\|` 불가라 안전. 개별 질의가 필요해지면 그때 V(n)으로 정규화 |
 
 ## 주요 쿼리 ↔ 인덱스
@@ -109,3 +128,4 @@ erDiagram
 | `GET /looks?month=` (유저별 기간) | `idx_looks_user_worn_date` |
 | refresh 검증 (해시 lookup) | `uq_refresh_tokens_token_hash` |
 | 시드 upsert | `uq_mcm_products_sku` |
+| `GET /wishlist` (유저별 최근순) | `idx_wishlist_user` |
