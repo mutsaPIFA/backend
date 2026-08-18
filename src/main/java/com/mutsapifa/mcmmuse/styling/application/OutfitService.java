@@ -126,7 +126,9 @@ public class OutfitService {
             .map(itemById::get)
             .filter(Objects::nonNull)
             .map(
-                it -> new OutfitResult.ItemSummary(it.getId(), it.getCutoutUrl(), it.getCategory()))
+                it ->
+                    new OutfitResult.ItemSummary(
+                        it.getId(), it.getCutoutUrl(), it.getCategory(), it.getColor(), it.getMaterial()))
             .toList();
     return new OutfitResult(
         mood.getId(),
