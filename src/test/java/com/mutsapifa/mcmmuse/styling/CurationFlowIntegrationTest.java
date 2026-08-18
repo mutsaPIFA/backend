@@ -152,7 +152,9 @@ class CurationFlowIntegrationTest {
                     "https://mcm/1",
                     null,
                     null,
-                    List.of()))
+                    List.of(),
+                    null,
+                    null))
             .getId();
     // 카탈로그 담기 → 옷장에 source=MCM 아이템 생성
     rest.exchange(
@@ -247,12 +249,18 @@ class CurationFlowIntegrationTest {
             HttpMethod.POST,
             new HttpEntity<>(
                 Map.of(
-                    "moodId", 1,
-                    "closetItemIds", outfitItemIds,
-                    "mcmProductId", outfitMcmId,
-                    "imageUrl", imageUrl,
-                    "concept", "Soft Classic",
-                    "note", "오늘 옷 센스 있다는 말 들은 날"),
+                    "moodId",
+                    1,
+                    "closetItemIds",
+                    outfitItemIds,
+                    "mcmProductId",
+                    outfitMcmId,
+                    "imageUrl",
+                    imageUrl,
+                    "concept",
+                    "Soft Classic",
+                    "note",
+                    "오늘 옷 센스 있다는 말 들은 날"),
                 auth(token)),
             Map.class);
 
@@ -271,10 +279,14 @@ class CurationFlowIntegrationTest {
             HttpMethod.POST,
             new HttpEntity<>(
                 Map.of(
-                    "moodId", 1,
-                    "closetItemIds", outfitItemIds,
-                    "mcmProductId", outfitMcmId,
-                    "imageUrl", "https://malicious.example.com/x.png"),
+                    "moodId",
+                    1,
+                    "closetItemIds",
+                    outfitItemIds,
+                    "mcmProductId",
+                    outfitMcmId,
+                    "imageUrl",
+                    "https://malicious.example.com/x.png"),
                 auth(token)),
             Map.class);
 

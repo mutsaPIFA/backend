@@ -55,7 +55,9 @@ public class McmProductIngestService {
                 s.productUrl(),
                 s.description(),
                 s.size(),
-                s.imageUrls()));
+                s.imageUrls(),
+                s.mood(),
+                s.styleNote()));
         inserted++;
       } else {
         found.updateFrom(
@@ -68,7 +70,9 @@ public class McmProductIngestService {
             s.productUrl(),
             s.description(),
             s.size(),
-            s.imageUrls());
+            s.imageUrls(),
+            s.mood(),
+            s.styleNote());
         updated++;
       }
     }

@@ -160,7 +160,9 @@ class CatalogFlowIntegrationTest {
                     "https://mcm/x",
                     null,
                     null,
-                    List.of()))
+                    List.of(),
+                    null,
+                    null))
             .getId();
 
     ingestService.ingest(); // 시드에 없으므로 비활성 처리

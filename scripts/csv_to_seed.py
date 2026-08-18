@@ -8,9 +8,11 @@
 - category: BAG→가방, WALLET/ACCESSORY→악세서리, SHOES→신발,
             CLOTHING→상품명 키워드(원피스>아우터>하의>상의 우선순위, 미분류 시 상의 폴백)
 - color:    영문 키워드 매핑, 공란·미매핑(콜라보명 등)→기타
-            ※ 기타 67건은 추후 무료 태깅으로 보강 가능 (my/프롬프트 정의.md)
+            ※ Blue→네이비 흡수 후 기타 30건 (2026-08-18)
 - material: 소재 텍스트+상품명 키워드, 우선순위 실크>울>데님>니트>가죽>합성>면
 - OutOfStock 포함 전부 적재 (active=true — 구매는 공식몰 딥링크라 재고는 저쪽 소관)
+- mood:     tag_product_mood.py 가 채운 CSV mood 컬럼을 그대로 (없으면 null)
+- styleNote: shortDesc — 추천 프롬프트에 넣는 한 줄 요약
 """
 
 import csv
@@ -31,7 +33,10 @@ BOTTOM = ["팬츠", "바지", "쇼츠", "스커트", "치마", "조거", "버뮤
 TOP = ["티셔츠", "셔츠", "니트", "스웨터", "후드", "후디", "맨투맨", "블라우스", "탑", "폴로", "저지", "스웻셔츠"]
 
 COLOR = [
-    ("블랙", r"Black"), ("화이트", r"White|Ivory|Cream"), ("네이비", r"Navy|Deep Blue"),
+    # Blue → 네이비: vocab에 블루가 없다. Color enum은 backend·DB·프론트 필터까지 묶인
+    # 계약이라 36건 때문에 열지 않고, 파랑 계열을 네이비로 흡수한다. 옷장 사진의 파란 옷도
+    # vision 태거가 같은 선택을 하므로 양쪽 라벨이 일치한다.
+    ("블랙", r"Black"), ("화이트", r"White|Ivory|Cream"), ("네이비", r"Navy|Blue"),
     ("그레이", r"Gray|Grey|Charcoal"), ("베이지", r"Beige|Sand|Oat"),
     ("브라운", r"Brown|Chocolate|Cinnamon|Mocha"), ("카멜", r"Cognac|Camel|Tan|Caramel"),
     ("그린", r"Green|Khaki|Olive|Moss"), ("핑크", r"Pink|Rose|Blush"),
@@ -77,6 +82,10 @@ def main() -> None:
                 "description": (r.get("longDesc") or r.get("shortDesc") or "").strip() or None,
                 "size": (r.get("sizes") or "").strip() or None,
                 "imageUrls": [u.strip() for u in r["images"].split("|")] if r["images"] else [],
+                # 추천/코디 프롬프트용 — mood 는 tag_product_mood.py 산출물,
+                # styleNote 는 shortDesc(평균 43자). longDesc 는 후보가 많아 프롬프트에 못 넣는다.
+                "mood": (r.get("mood") or "").strip() or None,
+                "styleNote": (r.get("shortDesc") or "").strip() or None,
             }
         )
     OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -192,7 +192,9 @@ class ClosetFlowIntegrationTest {
                     "https://mcm/p/1",
                     null,
                     null,
-                    List.of()))
+                    List.of(),
+                    null,
+                    null))
             .getId();
 
     ResponseEntity<Map> res =
