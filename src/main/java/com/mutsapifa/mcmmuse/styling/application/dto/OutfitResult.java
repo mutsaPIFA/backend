@@ -1,10 +1,12 @@
 package com.mutsapifa.mcmmuse.styling.application.dto;
 
 import com.mutsapifa.mcmmuse.shared.vocab.Category;
+import com.mutsapifa.mcmmuse.shared.vocab.Color;
+import com.mutsapifa.mcmmuse.shared.vocab.Material;
 import java.util.List;
 
 /**
- * 계약 §4-4 응답 모양 — {@code imageUrl} = AI 화보(연출컷). 생성 실패 시 null이면 프론트가 cutoutUrl들로 콜라주 폴백 렌더.
+ * 계약 §4-4 응답 모양 — {@code imageUrl} = AI 화보(연출컷). 생성에 실패한 후보는 응답에서 제외된다(OutfitImageService).
  */
 public record OutfitResult(
     Long moodId,
@@ -19,7 +21,8 @@ public record OutfitResult(
     return new OutfitResult(moodId, occasionLabel, concept, url, closetItems, mcmProduct, reason);
   }
 
-  public record ItemSummary(Long id, String cutoutUrl, Category category) {}
+  /** color·material은 표시용(프론트가 "블랙 가죽 가방"식 이름 조합) — 계약 §4-4 */
+  public record ItemSummary(Long id, String cutoutUrl, Category category, Color color, Material material) {}
 
   public record McmSummary(Long id, String imageUrl, String cutoutUrl, String name) {}
 }
