@@ -115,7 +115,18 @@ class CatalogFlowIntegrationTest {
             new HttpEntity<>(auth()),
             List.class,
             "가방");
-    assertThat(byCategory.getBody()).hasSize(30);
+    // 시드가 늘어도 깨지지 않게 개수 하드코딩 대신 필터 동작 자체를 검증
+    assertThat(byCategory.getBody()).isNotEmpty();
+    assertThat(byCategory.getBody())
+        .allSatisfy(p -> assertThat(((Map<String, Object>) p).get("category")).isEqualTo("가방"));
+    assertThat(byCategory.getBody().size()).isLessThan(seedTotal());
+  }
+
+  /** 전체 활성 시드 수 — 필터가 전량 반환이 아님을 확인하는 상한 */
+  private int seedTotal() {
+    ResponseEntity<List> all =
+        rest.exchange("/api/v1/mcm-products", HttpMethod.GET, new HttpEntity<>(auth()), List.class);
+    return all.getBody().size();
   }
 
   @Test
