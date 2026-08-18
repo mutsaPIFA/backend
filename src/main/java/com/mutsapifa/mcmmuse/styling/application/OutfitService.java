@@ -81,7 +81,13 @@ public class OutfitService {
             .map(
                 p ->
                     new AiProduct(
-                        p.getId(), p.getName(), p.getCategory(), p.getColor(), p.getMaterial()))
+                        p.getId(),
+                        p.getName(),
+                        p.getCategory(),
+                        p.getColor(),
+                        p.getMaterial(),
+                        p.getMood(),
+                        p.getStyleNote()))
             .toList();
 
     // id 재검증: 실재하는 아이템·제품으로만 응답 조립 (환각 차단)

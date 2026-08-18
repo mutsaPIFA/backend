@@ -116,7 +116,9 @@ class StylingFlowIntegrationTest {
             "https://mcm/1",
             null,
             null,
-            List.of()));
+            List.of(),
+            null,
+            null));
     mcmProductRepository.save(
         new McmProduct(
             "STYSKU002",
@@ -129,7 +131,9 @@ class StylingFlowIntegrationTest {
             "https://mcm/2",
             null,
             null,
-            List.of()));
+            List.of(),
+            null,
+            null));
     mcmProductRepository.save(
         new McmProduct(
             "STYSKU003",
@@ -142,7 +146,9 @@ class StylingFlowIntegrationTest {
             "https://mcm/3",
             null,
             null,
-            List.of()));
+            List.of(),
+            null,
+            null));
     assertThat(itemNavyTop).isNotNull();
   }
 

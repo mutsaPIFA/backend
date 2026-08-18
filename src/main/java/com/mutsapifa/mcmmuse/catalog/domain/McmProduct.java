@@ -2,6 +2,7 @@ package com.mutsapifa.mcmmuse.catalog.domain;
 
 import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Color;
+import com.mutsapifa.mcmmuse.shared.vocab.ItemMood;
 import com.mutsapifa.mcmmuse.shared.vocab.Material;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -85,6 +86,15 @@ public class McmProduct {
   @Column(name = "image_urls", columnDefinition = "text")
   private List<String> imageUrls = new ArrayList<>();
 
+  /** 무드 태그 — 옷장 아이템과 같은 vocabulary. 태깅 전 적재분은 null (추천 시 미고려) */
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20)
+  private ItemMood mood;
+
+  /** 스타일 한 줄 요약 — 추천·코디 프롬프트 입력용 (원천 shortDesc) */
+  @Column(name = "style_note", columnDefinition = "text")
+  private String styleNote;
+
   /** 피드에서 사라지면 false — 카탈로그 조회에서만 숨는다 */
   @Column(nullable = false)
   private boolean active = true;
@@ -108,7 +118,9 @@ public class McmProduct {
       String productUrl,
       String description,
       String size,
-      List<String> imageUrls) {
+      List<String> imageUrls,
+      ItemMood mood,
+      String styleNote) {
     this.sku = sku;
     this.name = name;
     this.category = category;
@@ -120,6 +132,8 @@ public class McmProduct {
     this.description = description;
     this.size = size;
     this.imageUrls = imageUrls != null ? new ArrayList<>(imageUrls) : new ArrayList<>();
+    this.mood = mood;
+    this.styleNote = styleNote;
   }
 
   /** 재적재(upsert) 시 갱신 — sku·cutoutUrl은 건드리지 않는다 */
@@ -133,7 +147,9 @@ public class McmProduct {
       String productUrl,
       String description,
       String size,
-      List<String> imageUrls) {
+      List<String> imageUrls,
+      ItemMood mood,
+      String styleNote) {
     this.name = name;
     this.category = category;
     this.color = color;
@@ -144,6 +160,8 @@ public class McmProduct {
     this.description = description;
     this.size = size;
     this.imageUrls = imageUrls != null ? new ArrayList<>(imageUrls) : new ArrayList<>();
+    this.mood = mood;
+    this.styleNote = styleNote;
     this.active = true;
   }
 

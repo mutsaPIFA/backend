@@ -40,6 +40,8 @@ erDiagram
         text description "nullable, 상세 설명 (V5)"
         text item_size "nullable, | 구분 목록 가능 (V5)"
         text image_urls "| 구분 캐러셀 5~8장 (V5)"
+        varchar mood "nullable, 텍스트 태깅 — 추천 프롬프트용 (V6)"
+        text style_note "nullable, 스타일 한줄 요약 (V6)"
         boolean active "피드 이탈 시 false"
     }
     closet_items {
