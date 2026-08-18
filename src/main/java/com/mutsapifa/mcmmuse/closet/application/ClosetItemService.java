@@ -73,6 +73,27 @@ public class ClosetItemService {
             userId, source);
   }
 
+  /** 계약 §3-6 — 부분 수정 (명칭·태그). null 필드는 유지, 명칭 빈 문자열은 제거 */
+  public ClosetItem edit(
+      Long userId,
+      Long itemId,
+      String name,
+      Category category,
+      Color color,
+      Material material,
+      ItemMood mood) {
+    ClosetItem item =
+        closetItemRepository
+            .findById(itemId)
+            .filter(it -> !it.isDeleted())
+            .orElseThrow(ClosetItemNotFoundException::new);
+    if (!item.isOwnedBy(userId)) {
+      throw new ClosetAccessDeniedException();
+    }
+    item.edit(name, category, color, material, mood);
+    return item;
+  }
+
   /** 계약 §3-5 — 소프트 삭제. 404(없거나 이미 삭제) / 403(남의 것) 구분 */
   public void delete(Long userId, Long itemId) {
     ClosetItem item =

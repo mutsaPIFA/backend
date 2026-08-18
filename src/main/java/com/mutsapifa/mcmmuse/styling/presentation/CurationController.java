@@ -6,6 +6,7 @@ import com.mutsapifa.mcmmuse.styling.application.OutfitService;
 import com.mutsapifa.mcmmuse.styling.application.dto.LookResult;
 import com.mutsapifa.mcmmuse.styling.application.dto.OutfitResult;
 import com.mutsapifa.mcmmuse.styling.infrastructure.MoodRepository;
+import com.mutsapifa.mcmmuse.styling.presentation.dto.LookEditRequest;
 import com.mutsapifa.mcmmuse.styling.presentation.dto.LookSaveRequest;
 import com.mutsapifa.mcmmuse.styling.presentation.dto.MoodResponse;
 import com.mutsapifa.mcmmuse.styling.presentation.dto.OutfitComposeRequest;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -107,6 +109,15 @@ public class CurationController {
   @GetMapping("/api/v1/looks/{id}")
   public LookResult getLook(@AuthenticationPrincipal Long userId, @PathVariable Long id) {
     return lookService.get(userId, id);
+  }
+
+  /** §4-9 — 룩 수정(소감·날짜). 보낸 필드만 반영 */
+  @PatchMapping("/api/v1/looks/{id}")
+  public LookResult editLook(
+      @AuthenticationPrincipal Long userId,
+      @PathVariable Long id,
+      @Valid @RequestBody LookEditRequest request) {
+    return lookService.edit(userId, id, request.note(), request.wornDate());
   }
 
   /** §4-8 — 기록 취소(삭제). 취소 후 같은 후보를 다시 기록할 수 있다 */

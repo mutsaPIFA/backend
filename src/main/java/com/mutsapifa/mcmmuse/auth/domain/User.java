@@ -37,6 +37,10 @@ public class User {
   @Column(nullable = false)
   private String nickname;
 
+  /** 프로필 이미지 절대 URL (계약 §1-5) — 미설정 시 null, 프론트가 기본 마스코트 표시 */
+  @Column(name = "avatar_url")
+  private String avatarUrl;
+
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -49,5 +53,15 @@ public class User {
     this.email = email;
     this.password = password;
     this.nickname = nickname;
+  }
+
+  /** 계약 §5-1 */
+  public void rename(String nickname) {
+    this.nickname = nickname;
+  }
+
+  /** 계약 §5-2 — 업로드 즉시 교체 */
+  public void changeAvatar(String avatarUrl) {
+    this.avatarUrl = avatarUrl;
   }
 }
