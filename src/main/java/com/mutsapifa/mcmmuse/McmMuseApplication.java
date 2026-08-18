@@ -4,14 +4,18 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * MCM MUSE 백엔드 부트스트랩.
  *
  * <p>{@code @EnableAsync} 는 룩 이미지 비동기 생성(계약 D2)에 쓰인다. {@code POST /looks} 는 즉시 201을 반환하고, 이미지 생성은
  * 백그라운드에서 돌아 {@code generatedImageUrl} 을 나중에 채운다.
+ *
+ * <p>{@code @EnableScheduling} 은 스토리지 고아 파일 일일 정리(StorageCleanupService)에 쓰인다.
  */
 @EnableAsync
+@EnableScheduling
 @ConfigurationPropertiesScan
 @SpringBootApplication
 public class McmMuseApplication {
