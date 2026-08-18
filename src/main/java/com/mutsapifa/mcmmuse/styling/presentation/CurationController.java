@@ -14,6 +14,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,6 +107,13 @@ public class CurationController {
   @GetMapping("/api/v1/looks/{id}")
   public LookResult getLook(@AuthenticationPrincipal Long userId, @PathVariable Long id) {
     return lookService.get(userId, id);
+  }
+
+  /** §4-8 — 기록 취소(삭제). 취소 후 같은 후보를 다시 기록할 수 있다 */
+  @DeleteMapping("/api/v1/looks/{id}")
+  public ResponseEntity<Void> deleteLook(@AuthenticationPrincipal Long userId, @PathVariable Long id) {
+    lookService.delete(userId, id);
+    return ResponseEntity.noContent().build();
   }
 
   /** §4-7 — 목록 (month=yyyy-MM) */

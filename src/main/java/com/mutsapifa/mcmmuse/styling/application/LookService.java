@@ -118,6 +118,16 @@ public class LookService {
     return looks.stream().map(l -> LookResult.from(l, occasionLabelOf(l))).toList();
   }
 
+  /** 기록 취소 (계약 §4-8) — 완전 삭제. 취소 후 같은 후보를 다시 기록할 수 있다. */
+  @Transactional
+  public void delete(Long userId, Long lookId) {
+    Look look = lookRepository.findById(lookId).orElseThrow(LookNotFoundException::new);
+    if (!look.isOwnedBy(userId)) {
+      throw new BusinessException(HttpStatus.FORBIDDEN, "권한이 없습니다");
+    }
+    lookRepository.delete(look);
+  }
+
   private String occasionLabelOf(Look look) {
     return moodRepository.findById(look.getMoodId()).map(Mood::occasionLabel).orElse("");
   }
