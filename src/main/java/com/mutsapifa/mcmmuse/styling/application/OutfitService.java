@@ -105,12 +105,17 @@ public class OutfitService {
 
   /**
    * 후보 수 정책 — 재고가 적으면 억지로 3개를 만들다 서로 겹친다. 상·하의 짝 재고(min)가 다양성의 상한이므로:
-   * 기본 1개 / 짝 재고 3 이상 → 2개 / 짝 재고 5 이상 + MCM 재료 2종 이상 → 3개. 원피스는 상·하의를 모두 대신한다.
+   * 기본 1개 / 짝 재고 3 이상 → 2개 / 짝 재고 5 이상 + MCM 재료 2종 이상 → 3개.
+   * 상단 카운트에는 아우터도 포함(레이어링으로 다양성을 만든다), 원피스는 상·하의를 모두 대신한다.
    */
   private int maxLooks(List<ClosetItem> activeItems, int mcmCandidateCount) {
     long tops =
         activeItems.stream()
-            .filter(it -> it.getCategory() == Category.상의 || it.getCategory() == Category.원피스)
+            .filter(
+                it ->
+                    it.getCategory() == Category.상의
+                        || it.getCategory() == Category.아우터
+                        || it.getCategory() == Category.원피스)
             .count();
     long bottoms =
         activeItems.stream()
