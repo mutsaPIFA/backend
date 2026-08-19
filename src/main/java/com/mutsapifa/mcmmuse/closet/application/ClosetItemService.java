@@ -31,9 +31,10 @@ public class ClosetItemService {
     this.mcmProductRepository = mcmProductRepository;
   }
 
-  /** 계약 §3-2 — 스캔 결과 등록 (태그는 사용자가 수정한 값 그대로) */
+  /** 계약 §3-2 — 스캔 결과 등록 (태그는 사용자가 수정한 값 그대로, 명칭은 옵션 — §3-6과 같은 의미론) */
   public ClosetItem register(
       Long userId,
+      String name,
       Source source,
       Category category,
       Color color,
@@ -41,8 +42,10 @@ public class ClosetItemService {
       ItemMood mood,
       String imageUrl,
       String cutoutUrl) {
-    return closetItemRepository.save(
-        new ClosetItem(userId, category, color, material, mood, imageUrl, cutoutUrl, source));
+    ClosetItem item =
+        new ClosetItem(userId, category, color, material, mood, imageUrl, cutoutUrl, source);
+    item.edit(name, null, null, null, null);
+    return closetItemRepository.save(item);
   }
 
   /** 계약 §3-3 — 카탈로그 MCM 담기 (태그·이미지는 제품에서 복사) */

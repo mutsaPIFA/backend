@@ -8,15 +8,19 @@ import com.mutsapifa.mcmmuse.shared.aiclient.AiClosetItem;
 import com.mutsapifa.mcmmuse.shared.aiclient.AiProduct;
 import com.mutsapifa.mcmmuse.shared.aiclient.OutfitComposer;
 import com.mutsapifa.mcmmuse.shared.aiclient.OutfitPick;
+import com.mutsapifa.mcmmuse.shared.vocab.Category;
 import com.mutsapifa.mcmmuse.shared.vocab.Source;
 import com.mutsapifa.mcmmuse.styling.application.dto.OutfitResult;
 import com.mutsapifa.mcmmuse.styling.domain.Mood;
 import com.mutsapifa.mcmmuse.styling.domain.exception.MoodNotFoundException;
 import com.mutsapifa.mcmmuse.styling.domain.exception.NoMcmInClosetException;
 import com.mutsapifa.mcmmuse.styling.infrastructure.MoodRepository;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -91,11 +95,59 @@ public class OutfitService {
             .toList();
 
     // id 재검증: 실재하는 아이템·제품으로만 응답 조립 (환각 차단)
-    return outfitComposer.compose(mood.getLabel(), ownItems, candidates).stream()
-        .map(pick -> toResult(pick, mood, itemById, productById))
-        .filter(Objects::nonNull)
-        .limit(3)
-        .toList();
+    List<OutfitResult> validated =
+        outfitComposer.compose(mood.getLabel(), ownItems, candidates).stream()
+            .map(pick -> toResult(pick, mood, itemById, productById))
+            .filter(Objects::nonNull)
+            .toList();
+    return selectDistinctLooks(validated, maxLooks(activeItems, mcmCandidates.size()));
+  }
+
+  /**
+   * 후보 수 정책 — 재고가 적으면 억지로 3개를 만들다 서로 겹친다. 상·하의 짝 재고(min)가 다양성의 상한이므로:
+   * 기본 1개 / 짝 재고 3 이상 → 2개 / 짝 재고 5 이상 + MCM 재료 2종 이상 → 3개.
+   * 상단 카운트에는 아우터도 포함(레이어링으로 다양성을 만든다), 원피스는 상·하의를 모두 대신한다.
+   */
+  private int maxLooks(List<ClosetItem> activeItems, int mcmCandidateCount) {
+    long tops =
+        activeItems.stream()
+            .filter(
+                it ->
+                    it.getCategory() == Category.상의
+                        || it.getCategory() == Category.아우터
+                        || it.getCategory() == Category.원피스)
+            .count();
+    long bottoms =
+        activeItems.stream()
+            .filter(it -> it.getCategory() == Category.하의 || it.getCategory() == Category.원피스)
+            .count();
+    long pairStock = Math.min(tops, bottoms);
+    if (pairStock >= 5 && mcmCandidateCount >= 2) {
+      return 3;
+    }
+    return pairStock >= 3 ? 2 : 1;
+  }
+
+  /** 중복 제약 — 어떤 두 후보도 같은 아이템·제품을 2개 이상 공유하지 않게 순서대로 선별한다 (ai 응답은 추천 순). */
+  private List<OutfitResult> selectDistinctLooks(List<OutfitResult> validated, int maxLooks) {
+    List<Set<String>> keptKeys = new ArrayList<>();
+    List<OutfitResult> selected = new ArrayList<>();
+    for (OutfitResult look : validated) {
+      Set<String> keys = new HashSet<>();
+      look.closetItems().forEach(item -> keys.add("i" + item.id()));
+      keys.add("m" + look.mcmProduct().id());
+      boolean overlaps =
+          keptKeys.stream().anyMatch(kept -> keys.stream().filter(kept::contains).count() >= 2);
+      if (overlaps) {
+        continue;
+      }
+      keptKeys.add(keys);
+      selected.add(look);
+      if (selected.size() >= maxLooks) {
+        break;
+      }
+    }
+    return selected;
   }
 
   private List<McmProduct> resolveMcmCandidates(

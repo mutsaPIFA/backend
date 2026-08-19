@@ -65,6 +65,7 @@ public class ClosetItemController {
       item =
           closetItemService.register(
               userId,
+              request.name(),
               request.source(),
               request.category(),
               request.color(),
