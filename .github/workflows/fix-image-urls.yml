@@ -1,0 +1,85 @@
+# 이미지 URL http→https 마이그레이션 (일회성 · 수동 실행)
+#
+# 배경: 이미지 절대 URL이 DB에 http://mcmmuse.duckdns.org/... 로 저장돼 있어
+#       https 페이지에서 mixed content가 된다 (크롬 계열은 자동 승격, 사파리는 아님).
+# 하는 일: ① .env 의 APP_STORAGE_PUBLIC_BASE_URL 을 https 로 (신규 저장분)
+#          ② DB 전 테이블·텍스트 컬럼에서 우리 도메인 http URL 일괄 치환 (기존 저장분)
+#          ③ backend 재기동 (~30s) 후 헬스 대기 → 외부 검증
+# https 이미지 URL은 http 페이지·APK 웹뷰에서도 항상 로드된다 — 전 환경 안전.
+name: fix-image-urls
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: mcmmuse-deploy
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: .env https 전환 + DB URL 치환 + backend 재기동
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ed25519 root@1.201.116.164 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          DIR=$(docker inspect mcmmuse-backend --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}')
+          echo "compose dir: $DIR"
+          cd "$DIR"
+
+          echo "--- .env (before):"
+          grep -n APP_STORAGE_PUBLIC_BASE_URL .env || echo "(키 없음 — 추가 예정)"
+          if grep -q '^APP_STORAGE_PUBLIC_BASE_URL=http://mcmmuse' .env 2>/dev/null; then
+            sed -i 's|^APP_STORAGE_PUBLIC_BASE_URL=http://|APP_STORAGE_PUBLIC_BASE_URL=https://|' .env
+          elif ! grep -q '^APP_STORAGE_PUBLIC_BASE_URL=' .env 2>/dev/null; then
+            echo 'APP_STORAGE_PUBLIC_BASE_URL=https://mcmmuse.duckdns.org/images' >> .env
+          fi
+          echo "--- .env (after):"
+          grep -n APP_STORAGE_PUBLIC_BASE_URL .env
+
+          cat > /tmp/fix-urls.sql <<'SQL'
+          DO $$
+          DECLARE r record; n int;
+          BEGIN
+            FOR r IN
+              SELECT table_name, column_name
+              FROM information_schema.columns
+              WHERE table_schema = 'public' AND data_type IN ('text', 'character varying')
+            LOOP
+              EXECUTE format(
+                'UPDATE %I SET %I = replace(%I, ''http://mcmmuse.duckdns.org/'', ''https://mcmmuse.duckdns.org/'') WHERE %I LIKE ''%%http://mcmmuse.duckdns.org/%%''',
+                r.table_name, r.column_name, r.column_name, r.column_name);
+              GET DIAGNOSTICS n = ROW_COUNT;
+              IF n > 0 THEN
+                RAISE NOTICE '%.%: % rows', r.table_name, r.column_name, n;
+              END IF;
+            END LOOP;
+          END $$;
+          SQL
+          docker exec -i mcmmuse-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d mcmmuse' < /tmp/fix-urls.sql
+
+          docker compose up -d backend
+          echo "backend 재기동 — 헬스 대기"
+          for i in $(seq 1 40); do
+            curl -sf http://localhost/actuator/health >/dev/null && break
+            sleep 3
+          done
+          curl -sf http://localhost/actuator/health && echo " <- backend UP"
+          REMOTE
+
+      - name: 외부 검증 — 응답에 http:// 이미지 URL이 남아있지 않은지
+        run: |
+          TOKEN=$(curl -sf -X POST https://mcmmuse.duckdns.org/api/v1/auth/guest \
+            -H "Origin: https://mcmmuse.duckdns.org" -H "Content-Type: application/json" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
+          BODY=$(curl -sf https://mcmmuse.duckdns.org/api/v1/mcm-products -H "Authorization: Bearer $TOKEN")
+          CNT=$(printf '%s' "$BODY" | grep -o 'http://mcmmuse' | wc -l)
+          echo "mcm-products 응답 내 http://mcmmuse 잔존: $CNT 건"
+          test "$CNT" -eq 0
+          echo "이미지 URL 전부 https — 검증 통과"
