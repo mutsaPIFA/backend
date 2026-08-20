@@ -33,3 +33,7 @@ Thumbs.db
 
 # 크롤링 중간 산출물
 scripts/__pycache__/
+
+# HTTPS 인증서·ACME 웹루트 (서버에서 setup-https 워크플로가 생성)
+letsencrypt/
+acme/

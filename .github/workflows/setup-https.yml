@@ -1,0 +1,106 @@
+# mcmmuse.duckdns.org HTTPS 셋업 (일회성 · 수동 실행)
+#
+# 전제: docker-compose.yml(443 포트·letsencrypt/acme 마운트)과 nginx/default.conf(ACME 웹루트,
+#       와일드카드 include)가 main에 머지되어 서버에 배포된 상태.
+# 하는 일: ① 챌린지 웹루트 확인 → ② certbot(도커)으로 Let's Encrypt 인증서 발급(HTTP-01)
+#          → ③ 443 server 블록 생성 → ④ nginx 무중단 reload → ⑤ 내·외부 https 검증.
+# http(80)는 그대로 유지 — QR·APK 영향 없음. 인증서는 90일 유효(행사 커버).
+name: setup-https
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: mcmmuse-deploy
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 서버에서 인증서 발급 + nginx 443 활성화
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/id_ed25519 root@1.201.116.164 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          DIR=$(docker inspect mcmmuse-nginx --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}')
+          echo "compose dir: $DIR"
+          cd "$DIR"
+          mkdir -p letsencrypt acme
+
+          # 새 compose(443 포트·마운트)로 nginx 재기동 — 배포에서 이미 반영됐어도 무해
+          docker compose up -d nginx
+          sleep 2
+
+          # ACME 웹루트가 80으로 서빙되는지 확인
+          mkdir -p acme/.well-known/acme-challenge
+          echo ping > acme/.well-known/acme-challenge/ping
+          curl -sf http://localhost/.well-known/acme-challenge/ping
+          rm acme/.well-known/acme-challenge/ping
+
+          # 인증서 발급 (이미 유효하면 --keep-until-expiring 으로 스킵)
+          docker run --rm \
+            -v "$DIR/letsencrypt:/etc/letsencrypt" \
+            -v "$DIR/acme:/var/www/acme" \
+            certbot/certbot certonly --webroot -w /var/www/acme \
+            -d mcmmuse.duckdns.org \
+            --agree-tos --register-unsafely-without-email -n --keep-until-expiring
+
+          # 443 server 블록 — default.conf 의 include /etc/letsencrypt/nginx-*.conf 가 집는다
+          cat > letsencrypt/nginx-ssl.conf <<'CONF'
+          server {
+              listen 443 ssl;
+              http2 on;
+              server_name mcmmuse.duckdns.org;
+              ssl_certificate /etc/letsencrypt/live/mcmmuse.duckdns.org/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/mcmmuse.duckdns.org/privkey.pem;
+
+              client_max_body_size 20m;
+              proxy_read_timeout 120s;
+              proxy_connect_timeout 5s;
+
+              location /api/ {
+                  proxy_pass http://backend:8080;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+              location /images/ {
+                  proxy_pass http://backend:8080;
+                  proxy_set_header Host $host;
+              }
+              location /swagger-ui/ {
+                  proxy_pass http://backend:8080;
+                  proxy_set_header Host $host;
+              }
+              location /v3/api-docs {
+                  proxy_pass http://backend:8080;
+                  proxy_set_header Host $host;
+              }
+              location /actuator/health {
+                  proxy_pass http://backend:8080;
+              }
+              location / {
+                  root /usr/share/nginx/html;
+                  try_files $uri $uri/ /index.html;
+              }
+          }
+          CONF
+
+          docker exec mcmmuse-nginx nginx -t
+          docker exec mcmmuse-nginx nginx -s reload
+          sleep 1
+          curl -skf https://localhost/actuator/health >/dev/null && echo "HTTPS OK (서버 내부)"
+          REMOTE
+
+      - name: 외부에서 https 접속 검증 (443 포트포워딩 확인)
+        run: |
+          sleep 2
+          curl -sfI https://mcmmuse.duckdns.org/ | head -3
+          curl -sf https://mcmmuse.duckdns.org/actuator/health
+          echo
+          echo "HTTPS OK (외부)"
