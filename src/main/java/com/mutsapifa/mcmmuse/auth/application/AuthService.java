@@ -8,6 +8,9 @@ import com.mutsapifa.mcmmuse.auth.domain.exception.InvalidCredentialsException;
 import com.mutsapifa.mcmmuse.auth.domain.exception.InvalidRefreshTokenException;
 import com.mutsapifa.mcmmuse.auth.infrastructure.RefreshTokenRepository;
 import com.mutsapifa.mcmmuse.auth.infrastructure.UserRepository;
+import com.mutsapifa.mcmmuse.closet.domain.ClosetItem;
+import com.mutsapifa.mcmmuse.closet.infrastructure.ClosetItemRepository;
+import com.mutsapifa.mcmmuse.shared.config.DemoProperties;
 import com.mutsapifa.mcmmuse.shared.config.JwtProperties;
 import com.mutsapifa.mcmmuse.shared.config.JwtTokenProvider;
 import java.nio.charset.StandardCharsets;
@@ -33,18 +36,25 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtProperties jwtProperties;
+  // auth → closet 방향 의존(게스트 시드 전용) — 옷장 복사가 계정 생성과 한 트랜잭션이어야 해서 여기서 소유
+  private final ClosetItemRepository closetItemRepository;
+  private final DemoProperties demoProperties;
 
   public AuthService(
       UserRepository userRepository,
       RefreshTokenRepository refreshTokenRepository,
       PasswordEncoder passwordEncoder,
       JwtTokenProvider jwtTokenProvider,
-      JwtProperties jwtProperties) {
+      JwtProperties jwtProperties,
+      ClosetItemRepository closetItemRepository,
+      DemoProperties demoProperties) {
     this.userRepository = userRepository;
     this.refreshTokenRepository = refreshTokenRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtTokenProvider = jwtTokenProvider;
     this.jwtProperties = jwtProperties;
+    this.closetItemRepository = closetItemRepository;
+    this.demoProperties = demoProperties;
   }
 
   public AuthResult register(String email, String password, String nickname) {
@@ -55,6 +65,37 @@ public class AuthService {
     User user =
         userRepository.save(new User(normalizedEmail, passwordEncoder.encode(password), nickname));
     return issueTokens(user.getId());
+  }
+
+  /**
+   * §1-6 — 게스트 발급. QR 진입용: 이메일·비밀번호는 내부 생성(사용자에게 노출하지 않음), 옷장은 템플릿 계정
+   * 복사로 시드. 게스트 이메일은 {@code @guest.mcmmuse.local} 도메인으로 통일 — 시연 후 일괄 정리용.
+   */
+  public AuthResult registerGuest() {
+    byte[] bytes = new byte[5];
+    SECURE_RANDOM.nextBytes(bytes);
+    String email = "guest-" + HexFormat.of().formatHex(bytes) + "@guest.mcmmuse.local";
+    String nickname = "게스트" + (1000 + SECURE_RANDOM.nextInt(9000));
+    User user =
+        userRepository.save(
+            new User(email, passwordEncoder.encode(generateOpaqueToken()), nickname));
+    seedClosetFromTemplate(user.getId());
+    return issueTokens(user.getId());
+  }
+
+  private void seedClosetFromTemplate(Long guestUserId) {
+    String templateEmail = demoProperties.guestTemplateEmail();
+    if (templateEmail == null || templateEmail.isBlank()) {
+      return;
+    }
+    userRepository
+        .findByEmail(normalize(templateEmail))
+        .ifPresent(
+            template ->
+                closetItemRepository
+                    .findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(template.getId())
+                    .forEach(
+                        item -> closetItemRepository.save(ClosetItem.copyOf(guestUserId, item))));
   }
 
   public AuthResult login(String email, String password) {
