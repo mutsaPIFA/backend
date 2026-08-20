@@ -53,10 +53,17 @@ app:
     cookie-secure: false   # HTTPS 배포 시 true (8/18 가비아 배포 때)
 
   # CORS — refresh 쿠키를 쓰므로 allowCredentials=true 이고, 와일드카드 오리진 불가
+  # 게스트 발급(§1-6) — 시드 옷장의 원본 계정. 기본 비움 = 빈 옷장 시작 (부스 실물 스캔 체험, 팀 확정 2026-08-20).
+  demo:
+    guest-template-email: ${APP_DEMO_GUEST_TEMPLATE_EMAIL:}
+
   cors:
     allowed-origins:
       - http://localhost:5173
       - http://localhost:3000
+      # Capacitor APK 웹뷰 오리진 (androidScheme http/https)
+      - http://localhost
+      - https://localhost
 
   # 이미지 저장 — StorageService 추상화 (계약 Q8)
   storage:

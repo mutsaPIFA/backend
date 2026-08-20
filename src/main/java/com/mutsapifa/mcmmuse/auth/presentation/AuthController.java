@@ -58,6 +58,15 @@ public class AuthController {
         .body(RegisterResponse.of(result.userId(), result.accessToken()));
   }
 
+  /** §1-6 — 게스트 발급: 입력 없이 계정 생성+로그인. QR 진입(웹 루트)에서 사용. */
+  @PostMapping("/guest")
+  public ResponseEntity<RegisterResponse> guest() {
+    AuthResult result = authService.registerGuest();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshToken()).toString())
+        .body(RegisterResponse.of(result.userId(), result.accessToken()));
+  }
+
   @PostMapping("/login")
   public ResponseEntity<TokenResponse> login(
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
