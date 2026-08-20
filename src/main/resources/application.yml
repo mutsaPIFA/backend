@@ -66,6 +66,10 @@ app:
       # Capacitor APK 웹뷰 오리진 (androidScheme http/https)
       - http://localhost
       - https://localhost
+      # 배포 도메인 — nginx가 443을 백엔드에 http로 프록시해 스킴이 불일치하면
+      # same-origin 요청도 CORS로 판정된다 → 두 스킴 모두 명시 허용
+      - http://mcmmuse.duckdns.org
+      - https://mcmmuse.duckdns.org
 
   # 이미지 저장 — StorageService 추상화 (계약 Q8)
   storage:
