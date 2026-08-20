@@ -108,6 +108,23 @@ public class ClosetItem {
     this.source = source;
   }
 
+  /** 게스트 시드(§1-6) — 템플릿 사용자의 아이템을 새 사용자 소유로 복사. 이미지 URL은 공유(파일 복사 없음). */
+  public static ClosetItem copyOf(Long newUserId, ClosetItem source) {
+    ClosetItem item =
+        new ClosetItem(
+            newUserId,
+            source.category,
+            source.color,
+            source.material,
+            source.mood,
+            source.imageUrl,
+            source.cutoutUrl,
+            source.source);
+    item.customName = source.customName;
+    item.mcmProductId = source.mcmProductId;
+    return item;
+  }
+
   /** 카탈로그 MCM 담기 — 태그·이미지는 제품에서 복사 */
   public static ClosetItem fromCatalog(
       Long userId,
