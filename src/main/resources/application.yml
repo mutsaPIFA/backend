@@ -48,7 +48,9 @@ app:
   # 인증 — access token(body) + refresh token(HttpOnly 쿠키)
   jwt:
     secret: ${JWT_SECRET:change-me-in-env-this-must-be-at-least-32-bytes-long}
-    access-token-ttl: 30m
+    # 시연 기간 한정 24h — APK 웹뷰는 크로스오리진 http라 refresh 쿠키가 저장되지 않아
+    # 30m이면 앱 로그인이 계속 풀린다. 행사 후 30m 복귀 예정 (2026-08-20)
+    access-token-ttl: ${APP_JWT_ACCESS_TTL:24h}
     refresh-token-ttl: 14d
     cookie-secure: false   # HTTPS 배포 시 true (8/18 가비아 배포 때)
 
